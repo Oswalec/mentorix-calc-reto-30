@@ -128,6 +128,13 @@ a {
   border-radius: var(--radio-boton);
   padding: var(--e-2) var(--e-3);
   min-height: 44px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.campo input[type="file"] {
+  width: 100%;
+  overflow: hidden;
 }
 
 fieldset {
