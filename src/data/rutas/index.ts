@@ -3,8 +3,15 @@
 import type { Ruta, Tema } from "../../lib/tipos";
 import { calculoDiferencial } from "./calculo-diferencial";
 import { calculoIntegral } from "./calculo-integral";
+import { calculoMultivariable } from "./calculo-multivariable";
+import { ecuacionesDiferenciales } from "./ecuaciones-diferenciales";
 
-export const rutas: Ruta[] = [calculoDiferencial, calculoIntegral];
+export const rutas: Ruta[] = [
+  calculoDiferencial,
+  calculoIntegral,
+  calculoMultivariable,
+  ecuacionesDiferenciales,
+];
 
 export function buscarRuta(slug: string): Ruta | undefined {
   return rutas.find((ruta) => ruta.slug === slug);
