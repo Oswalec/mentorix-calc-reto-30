@@ -1,0 +1,11 @@
+---
+import Base from "../../layouts/Base.astro";
+import IslaGuiaDia from "../../components/GuiaDia";
+---
+
+<Base titulo="Detalle del día" seccion="calendario">
+  <h1>Detalle del día</h1>
+  <IslaGuiaDia client:only="preact" leerUrl>
+    <p slot="fallback">Cargando el día…</p>
+  </IslaGuiaDia>
+</Base>
