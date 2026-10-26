@@ -1,0 +1,11 @@
+---
+import Base from "../../layouts/Base.astro";
+import IslaProgreso from "../../components/Progreso";
+---
+
+<Base titulo="Progreso" seccion="progreso">
+  <h1>Tu progreso</h1>
+  <IslaProgreso client:only="preact">
+    <p slot="fallback">Cargando tu progreso…</p>
+  </IslaProgreso>
+</Base>
