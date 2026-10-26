@@ -16,6 +16,7 @@ import {
   rutaActiva,
 } from "../lib/progreso/store";
 import type { Dia, Ruta, TipoDia } from "../lib/tipos";
+import { FormularioEvaluacion } from "./FormularioEvaluacion";
 import { LimiteErrores } from "./LimiteErrores";
 
 export const ETIQUETAS_TIPO: Record<TipoDia, string> = {
@@ -234,6 +235,10 @@ export function GuiaDia(props: Props) {
           <p>Hoy no hay repasos programados.</p>
         )}
       </section>
+
+      {(dia.tipo === "evaluacion" || dia.tipo === "simulacro") && (
+        <FormularioEvaluacion key={dia.numero} ruta={ruta} dia={dia} />
+      )}
 
       <section class="tarjeta">
         <h3>Tiempo sugerido por bloque</h3>
