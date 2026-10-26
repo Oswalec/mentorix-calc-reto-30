@@ -1,0 +1,15 @@
+# dependencias y salidas generadas
+node_modules/
+dist/
+.astro/
+
+# entorno local (este proyecto no usa variables de entorno)
+.env
+.env.*
+
+# registros
+npm-debug.log*
+
+# sistema operativo
+.DS_Store
+Thumbs.db

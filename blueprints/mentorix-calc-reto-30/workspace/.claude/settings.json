@@ -1,0 +1,49 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install --no-audit --no-fund)",
+      "Bash(npm ci)",
+      "Bash(npm run check)",
+      "Bash(npm test)",
+      "Bash(npm test -- tests/:*)",
+      "Bash(npm run build)",
+      "Bash(npm run format)",
+      "Bash(npm run format:check)",
+      "Bash(npm run dev)",
+      "Bash(npm run preview)",
+      "Bash(node scripts/verificar-dist.mjs)",
+      "Bash(node scripts/verificar-workflow.mjs)",
+      "Bash(node -e \"require('node:fs').cpSync('blueprints/mentorix-calc-reto-30/workspace', '.', { recursive: true, force: false, errorOnExist: false })\")",
+      "Bash(test:*)",
+      "Bash(grep:*)",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(wc:*)",
+      "Bash(tail:*)",
+      "Bash(git init -b main)",
+      "Bash(git config user.name)",
+      "Bash(git config user.email)",
+      "Bash(git config user.name \"Mentorix Builder\")",
+      "Bash(git config user.email \"builder@mentorix.local\")",
+      "Bash(git add -A)",
+      "Bash(git commit -m:*)",
+      "Bash(git tag step-:*)",
+      "Bash(git tag -l:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git ls-files:*)",
+      "Bash(git check-ignore -q:*)",
+      "Bash(git rev-parse:*)",
+      "Bash(git rev-list:*)"
+    ],
+    "deny": [
+      "Bash(git push:*)",
+      "Bash(git push --force:*)",
+      "Bash(rm -rf:*)",
+      "Bash(npm publish:*)",
+      "Read(./.env)",
+      "Read(./.env.*)"
+    ]
+  }
+}

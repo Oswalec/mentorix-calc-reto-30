@@ -1,0 +1,9 @@
+# el bundle del blueprint vive dentro del proyecto: nunca se formatea
+blueprints/
+# salidas y dependencias
+dist/
+.astro/
+node_modules/
+package-lock.json
+# documentación en Markdown: se escribe a mano
+*.md

@@ -1,0 +1,37 @@
+{
+  "name": "mentorix-calc-reto-30",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Mentorix Calc — Reto de Estudio de 30 Días: guía diaria de estudio y seguimiento personal para estudiantes de Cálculo.",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "check": "astro check",
+    "build": "astro build && node scripts/verificar-dist.mjs",
+    "preview": "astro preview",
+    "test": "vitest run",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "dependencies": {
+    "@astrojs/preact": "^6.1.1",
+    "@fontsource-variable/fraunces": "^5.3.0",
+    "@fontsource-variable/inter": "^5.3.0",
+    "@preact/signals": "^2.11.3",
+    "astro": "^7.4.2",
+    "preact": "^10.29.8"
+  },
+  "devDependencies": {
+    "@astrojs/check": "0.9.12",
+    "@testing-library/preact": "^3.2.6",
+    "happy-dom": "^21.0.4",
+    "prettier": "^3.9.10",
+    "prettier-plugin-astro": "^1.1.2",
+    "typescript": "^6.0.3",
+    "vite": "^8.3.5",
+    "vitest": "^5.0.5"
+  }
+}

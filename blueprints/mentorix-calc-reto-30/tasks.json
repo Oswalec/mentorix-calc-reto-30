@@ -1,0 +1,457 @@
+[
+  {
+    "id": "E1-T1",
+    "title": "Andamiaje: página mínima, prueba de humo y build verificado",
+    "epic": "01-fundamentos-y-logica",
+    "dependencies": [],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN `npm run build` runs THE SYSTEM SHALL write `dist/index.html` containing `href=\"/mentorix-calc-reto-30/\"` and `scripts/verificar-dist.mjs` SHALL print `verificar-dist: OK` (every internal href/src starts with `/mentorix-calc-reto-30/`).",
+      "WHEN `npm test` runs THE SYSTEM SHALL pass `tests/unit/humo.test.tsx`, which writes and reads `localStorage` in happy-dom and renders Preact JSX.",
+      "WHEN `npm run check` runs THE SYSTEM SHALL report 0 errors with TypeScript strict.",
+      "WHEN `npm run format:check` runs with the bundle present in `blueprints/` THE SYSTEM SHALL exit 0, because `.prettierignore` excludes `blueprints/`."
+    ],
+    "verify": [
+      "npm run check",
+      "npm test",
+      "npm run build",
+      "test -f dist/index.html",
+      "grep -q 'href=\"/mentorix-calc-reto-30/\"' dist/index.html",
+      "npm run format:check"
+    ],
+    "checkpoint": "step-01-andamiaje",
+    "files": [
+      "src/pages/index.astro",
+      "tests/unit/humo.test.tsx"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E1-T2",
+    "title": "Tokens de diseño, layout con navegación y modo claro/oscuro",
+    "epic": "01-fundamentos-y-logica",
+    "dependencies": [
+      "E1-T1"
+    ],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN `npm test -- tests/unit/tokens.test.ts` runs THE SYSTEM SHALL find every light token of §7 in `:root` and every dark token in both `:root:not([data-theme=\"light\"])` and `:root[data-theme=\"dark\"]`.",
+      "WHEN the same test computes WCAG contrast THE SYSTEM SHALL measure at least 4.5:1 for text/bg, text/surface, text-muted/bg, text-muted/surface, primary-contrast/primary, primary/surface, danger/surface, warning/surface and success/surface in both modes.",
+      "WHEN `npm run build` runs THE SYSTEM SHALL emit in `dist/index.html` the inline theme script (`mentorix-tema`) and the four navigation links `/mentorix-calc-reto-30/hoy/`, `/mentorix-calc-reto-30/calendario/`, `/mentorix-calc-reto-30/progreso/` and `/mentorix-calc-reto-30/ajustes/`, and `verificar-dist.mjs` SHALL print `verificar-dist: OK`."
+    ],
+    "verify": [
+      "npm test -- tests/unit/tokens.test.ts",
+      "npm test",
+      "npm run check",
+      "npm run build",
+      "grep -q 'mentorix-tema' dist/index.html",
+      "grep -q 'href=\"/mentorix-calc-reto-30/hoy/\"' dist/index.html",
+      "grep -q 'href=\"/mentorix-calc-reto-30/calendario/\"' dist/index.html",
+      "grep -q 'href=\"/mentorix-calc-reto-30/progreso/\"' dist/index.html",
+      "grep -q 'href=\"/mentorix-calc-reto-30/ajustes/\"' dist/index.html",
+      "npm run format:check"
+    ],
+    "checkpoint": "step-02-tokens-layout",
+    "files": [
+      "src/styles/tokens.css",
+      "src/styles/global.css",
+      "src/layouts/Base.astro",
+      "src/pages/index.astro",
+      "tests/unit/tokens.test.ts"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E1-T3",
+    "title": "Tipos, registro de rutas, Diferencial e Integral",
+    "epic": "01-fundamentos-y-logica",
+    "dependencies": [
+      "E1-T1"
+    ],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN `npm test -- tests/unit/rutas.test.ts` runs THE SYSTEM SHALL confirm that every registered route, topic and subtopic slug is kebab-case and unique across the whole catalog and that no topic slug is `final`.",
+      "WHEN the same test checks prerequisites THE SYSTEM SHALL find every prerequisite slug in the catalog and, when it belongs to the same route, positioned before the topic that requires it.",
+      "WHEN the same test checks subtopics THE SYSTEM SHALL find `diasEstimados` as an integer >= 1 and `dificultad` in {1, 2, 3} for every subtopic.",
+      "WHEN `buscarRuta` or `buscarTema` receives an unknown slug THE SYSTEM SHALL return `undefined`."
+    ],
+    "verify": [
+      "npm test -- tests/unit/rutas.test.ts",
+      "npm test",
+      "npm run check",
+      "npm run format:check"
+    ],
+    "checkpoint": "step-03-rutas-base",
+    "files": [
+      "src/lib/tipos.ts",
+      "src/data/rutas/index.ts",
+      "src/data/rutas/calculo-diferencial.ts",
+      "src/data/rutas/calculo-integral.ts",
+      "tests/unit/rutas.test.ts"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E1-T4",
+    "title": "Generador del plan puro, fechas locales y reparto de minutos",
+    "epic": "01-fundamentos-y-logica",
+    "dependencies": [
+      "E1-T3"
+    ],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN `generarPlan` runs on the test route with start `2026-03-01`, horizon 14, 120 minutes and a light day every 7 THE SYSTEM SHALL produce, in order, `estudio:a#1, estudio:a#2, estudio:b#1, evaluacion:t1, correccion:t1, estudio:c#1, repaso:rep-1, estudio:c#2, estudio:c#3, evaluacion:t2, correccion:t2, simulacro:final, correccion:final, repaso:rep-2` with day 14 dated `2026-03-14`.",
+      "WHEN a subtopic finishes on day d THE SYSTEM SHALL schedule its review on days d+1, d+3, d+7 and d+14 that fall within the horizon, giving `repasoSlugs` 3:[a] 4:[b] 5:[a] 6:[b] 9:[a] 10:[b,c] 12:[c] in the test route.",
+      "WHEN minutes are split for 120 minutes THE SYSTEM SHALL give study days of difficulty 1-2 the blocks 10/30/15/45/5/10/5, difficulty 3 the blocks 5/30/15/50/5/10/5, and every day exactly `minutosPorDia` (60 on light review days) in multiples of 5 with no block under 5, for every total from 60 to 360.",
+      "WHEN the horizon is 7 days THE SYSTEM SHALL not compress any subtopic and SHALL return `fueraDelHorizonte` = `[{ temaSlug: \"t2\", subtemaSlug: \"c\", nombre: \"Subtema C\", diasEstimados: 3 }]`.",
+      "WHEN only `fechaInicio` changes THE SYSTEM SHALL keep every block id identical, ids having the form `${rutaSlug}:${tipoDia}:${clave}:${tipoBloque}` such as `prueba:estudio:a#1:teoria`.",
+      "WHEN the config has a 6-day horizon, 123 minutes or the date `2026-02-30` THE SYSTEM SHALL throw `RangeError`."
+    ],
+    "verify": [
+      "npm test -- tests/unit/generador.test.ts",
+      "npm test",
+      "npm run check",
+      "npm run format:check"
+    ],
+    "checkpoint": "step-04-generador-plan",
+    "files": [
+      "src/lib/fechas.ts",
+      "src/lib/plan/minutos.ts",
+      "src/lib/plan/generador.ts",
+      "tests/fixtures/ruta-prueba.ts",
+      "tests/unit/generador.test.ts"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E1-T5",
+    "title": "Ajustes del plan y catálogo completo de cuatro rutas",
+    "epic": "01-fundamentos-y-logica",
+    "dependencies": [
+      "E1-T4"
+    ],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN `configInicial(\"2026-03-01\")` runs THE SYSTEM SHALL return horizon 30, 120 minutes, a light day every 7 and no reinforcements.",
+      "WHEN a 7-day test plan is extended by 7 days THE SYSTEM SHALL set the horizon to 14, empty `fueraDelHorizonte` and keep the block ids of days 1-5 unchanged.",
+      "WHEN the duration is set to 6, 121 or 30.5 days, or an extension goes past 120 days or adds 0 days THE SYSTEM SHALL throw `RangeError`.",
+      "WHEN `prerrequisitosDeRuta` runs on `ecuaciones-diferenciales` THE SYSTEM SHALL list `integral-indefinida`, `edo-primer-orden`, `integrales-impropias` and `edo-orden-superior` in that order, with their names and the topics that require them.",
+      "WHEN `npm test` runs THE SYSTEM SHALL register exactly `calculo-diferencial`, `calculo-integral`, `calculo-multivariable` and `ecuaciones-diferenciales`, in that order, all passing the catalog validation."
+    ],
+    "verify": [
+      "npm test -- tests/unit/ajustes.test.ts",
+      "npm test -- tests/unit/rutas.test.ts",
+      "npm test",
+      "npm run check",
+      "npm run format:check"
+    ],
+    "checkpoint": "step-05-ajustes-catalogo",
+    "files": [
+      "src/lib/plan/ajustes.ts",
+      "src/data/rutas/calculo-multivariable.ts",
+      "src/data/rutas/ecuaciones-diferenciales.ts",
+      "src/data/rutas/index.ts",
+      "tests/unit/ajustes.test.ts"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E1-T6",
+    "title": "Progreso: modelo, validador, almacén y acciones",
+    "epic": "01-fundamentos-y-logica",
+    "dependencies": [
+      "E1-T5"
+    ],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN a state with a completed block is saved and loaded again THE SYSTEM SHALL store it under `mentorix-reto:v1` and return an identical `Estado` with `corrupto: null`.",
+      "WHEN the stored text is not valid JSON or has `version: 2` THE SYSTEM SHALL return the initial state, return the raw text in `corrupto`, copy it to `mentorix-reto:v1:danado` and leave `mentorix-reto:v1` untouched.",
+      "WHEN `getItem` and `setItem` throw (private mode) THE SYSTEM SHALL return the initial state without throwing and `guardarEstado` SHALL return `false`.",
+      "WHEN a block is marked completed THE SYSTEM SHALL record its ISO timestamp in `completados` and leave `dominio` unchanged.",
+      "WHEN `declararDominio` receives level `dominado` with blank evidence THE SYSTEM SHALL return an `Error`, and `validarEstado` SHALL also reject a stored `dominado` without evidence.",
+      "WHEN a grade is greater than the maximum grade or a difficulty text is blank THE SYSTEM SHALL return an `Error` and save nothing."
+    ],
+    "verify": [
+      "npm test -- tests/unit/progreso.test.ts",
+      "npm test",
+      "npm run check",
+      "npm run format:check"
+    ],
+    "checkpoint": "step-06-progreso-almacen",
+    "files": [
+      "src/lib/progreso/estado.ts",
+      "src/lib/progreso/validar.ts",
+      "src/lib/progreso/almacen.ts",
+      "src/lib/progreso/acciones.ts",
+      "tests/unit/progreso.test.ts"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E1-T7",
+    "title": "Respaldo, derivados y límite de errores",
+    "epic": "01-fundamentos-y-logica",
+    "dependencies": [
+      "E1-T6"
+    ],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN a state is serialized and read back with `leerRespaldo` THE SYSTEM SHALL return the same state and the summary `1 ruta · 1 bloque completado · 0 evaluaciones · 0 dificultades`.",
+      "WHEN the backup text is not JSON, lacks fields or has `version: 9` THE SYSTEM SHALL return an `Error`.",
+      "WHEN there is progress and no backup, or the last backup is 7 or more days old THE SYSTEM SHALL report that a reminder is needed, and SHALL not report it at 6 days or with no progress.",
+      "WHEN day 1 of the test plan is fully completed THE SYSTEM SHALL compute `{ completados: 7, total: 80, porcentaje: 9 }`, and with day 3 completed by day 5 the pending reviews SHALL be `b` (day 4) and `a` (day 5).",
+      "WHEN the declared mastery is summarized THE SYSTEM SHALL count undeclared subtopics as `sin-evaluar` regardless of completed blocks."
+    ],
+    "verify": [
+      "npm test -- tests/unit/respaldo.test.ts",
+      "npm test -- tests/unit/derivados.test.ts",
+      "npm test",
+      "npm run check",
+      "npm run format:check"
+    ],
+    "checkpoint": "step-07-respaldo-derivados",
+    "files": [
+      "src/lib/progreso/respaldo.ts",
+      "src/lib/progreso/derivados.ts",
+      "src/components/LimiteErrores.tsx",
+      "tests/unit/respaldo.test.ts",
+      "tests/unit/derivados.test.ts"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E2-T1",
+    "title": "Store, enlaces e isla de Inicio",
+    "epic": "02-interfaz-y-despliegue",
+    "dependencies": [
+      "E1-T2",
+      "E1-T7"
+    ],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN Inicio renders with no active route THE SYSTEM SHALL show four radio options named after the four routes and the fields «Fecha de inicio» (today), «Duración del reto (días)» (30) and «Minutos de estudio por día» (120).",
+      "WHEN the student picks «Cálculo Integral» and presses «Empezar mi reto» THE SYSTEM SHALL save `rutaActiva: \"calculo-integral\"` with the default config under `mentorix-reto:v1` and show «Día 1 de 30» and the link «Ir a Hoy».",
+      "WHEN the duration is 200 THE SYSTEM SHALL not start the route and SHALL show an alert containing «entre 7 y 120».",
+      "WHEN the stored progress is corrupt THE SYSTEM SHALL offer «Descargar datos dañados» and «Empezar de nuevo» while keeping the raw text in `mentorix-reto:v1:danado`.",
+      "WHEN a child of `LimiteErrores` throws THE SYSTEM SHALL show «Algo salió mal en esta sección» with the button «Exportar respaldo» and log a JSON line containing `\"origen\":\"prueba\"` with `console.error`.",
+      "WHEN `npm run build` runs THE SYSTEM SHALL emit an `astro-island` in `dist/index.html` and `verificar-dist.mjs` SHALL print `verificar-dist: OK`."
+    ],
+    "verify": [
+      "npm test -- tests/componentes/inicio.test.tsx",
+      "npm test",
+      "npm run check",
+      "npm run build",
+      "grep -q '<astro-island' dist/index.html",
+      "npm run format:check"
+    ],
+    "checkpoint": "step-08-inicio",
+    "files": [
+      "src/lib/progreso/store.ts",
+      "src/lib/enlaces.ts",
+      "src/components/Inicio.tsx",
+      "src/pages/index.astro",
+      "tests/componentes/inicio.test.tsx"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E2-T2",
+    "title": "Isla GuiaDia con los siete apartados y páginas Hoy y Día",
+    "epic": "02-interfaz-y-despliegue",
+    "dependencies": [
+      "E2-T1"
+    ],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN GuiaDia renders day 1 of `calculo-diferencial` starting `2026-03-01` THE SYSTEM SHALL show the headings «Objetivo del día», «Qué estudiar», «Qué hacer», «Repaso», «Tiempo sugerido por bloque», «Cierre de sesión» and «Siguiente paso», the objective «Comprender y practicar «Dominio y rango de funciones reales».» and 7 checkboxes.",
+      "WHEN the checkbox «Teoría · 30 min» is clicked THE SYSTEM SHALL save `calculo-diferencial:estudio:dominio-y-rango#1:teoria` in `completados`, show «1 de 7 bloques completados» and leave `dominio` empty.",
+      "WHEN «Guardar dificultad» is pressed with a blank description THE SYSTEM SHALL save nothing and show «Describe la dificultad o el error antes de guardarlo.»; with text it SHALL save one open difficulty linked to `dominio-y-rango`.",
+      "WHEN «Guardar reflexión» is pressed THE SYSTEM SHALL save the text under key `\"1\"` in `reflexiones`.",
+      "WHEN GuiaDia receives `numero={2}` THE SYSTEM SHALL show day 2, and with `numero={99}` it SHALL show «Ese día no existe en tu plan».",
+      "WHEN `npm run build` runs THE SYSTEM SHALL write `dist/hoy/index.html` and `dist/dia/index.html` and `verificar-dist.mjs` SHALL print `verificar-dist: OK`."
+    ],
+    "verify": [
+      "npm test -- tests/componentes/guia-dia.test.tsx",
+      "npm test",
+      "npm run check",
+      "npm run build",
+      "test -f dist/hoy/index.html",
+      "test -f dist/dia/index.html",
+      "npm run format:check"
+    ],
+    "checkpoint": "step-09-guia-dia",
+    "files": [
+      "src/components/GuiaDia.tsx",
+      "src/pages/hoy/index.astro",
+      "src/pages/dia/index.astro",
+      "tests/componentes/guia-dia.test.tsx"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E2-T3",
+    "title": "Calendario y «Para después del horizonte»",
+    "epic": "02-interfaz-y-despliegue",
+    "dependencies": [
+      "E2-T2"
+    ],
+    "priority": "p1",
+    "acceptance": [
+      "WHEN the calendar renders a 30-day plan with day 1 completed and today being day 2 THE SYSTEM SHALL show 30 days whose `data-estado` is «Completado» for day 1, «Hoy» for day 2 and «Próximo» for day 3, with day 7 labelled «Repaso».",
+      "WHEN a day is listed THE SYSTEM SHALL link it to `/dia/?n=<numero>` built with the site base.",
+      "WHEN subtopics do not fit THE SYSTEM SHALL list them under «Para después del horizonte», for example «Reglas de derivación (2 días)».",
+      "WHEN «Extender 14 días» is pressed THE SYSTEM SHALL save `horizonteDias: 44` and render 44 days.",
+      "WHEN an extension would exceed 120 days THE SYSTEM SHALL keep the plan unchanged and show «La duración debe estar entre 7 y 120 días.»."
+    ],
+    "verify": [
+      "npm test -- tests/componentes/calendario.test.tsx",
+      "npm test",
+      "npm run check",
+      "npm run build",
+      "test -f dist/calendario/index.html",
+      "npm run format:check"
+    ],
+    "checkpoint": "step-10-calendario",
+    "files": [
+      "src/components/Calendario.tsx",
+      "src/pages/calendario/index.astro",
+      "tests/componentes/calendario.test.tsx"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E2-T4",
+    "title": "Exámenes externos y diario de dificultades",
+    "epic": "02-interfaz-y-despliegue",
+    "dependencies": [
+      "E2-T2"
+    ],
+    "priority": "p1",
+    "acceptance": [
+      "WHEN GuiaDia shows a study day THE SYSTEM SHALL not render «Resultado de tu examen», and on day 10 of a 30-day `calculo-diferencial` plan (exam on «Funciones») it SHALL render it.",
+      "WHEN grade 15, maximum 20, an error text and the topic «Funciones» are saved THE SYSTEM SHALL store one evaluation with `diaNumero: 10`, `temaSlug: \"funciones\"`, `nota: 15`, `notaMaxima: 20` and `temasAReforzar: [\"funciones\"]`, and show «Resultado guardado.».",
+      "WHEN the grade 25 exceeds the maximum 20 THE SYSTEM SHALL show the alert «La nota no puede ser mayor que la nota máxima.» and store no evaluation.",
+      "WHEN the difficulty journal has no entries THE SYSTEM SHALL show «Aún no registras dificultades. Puedes hacerlo desde el cierre de cada día.».",
+      "WHEN the journal lists entries THE SYSTEM SHALL show open ones first and the checkbox «Resuelta: <texto>» SHALL save `resuelta: true`."
+    ],
+    "verify": [
+      "npm test -- tests/componentes/evaluaciones.test.tsx",
+      "npm test",
+      "npm run check",
+      "npm run build",
+      "npm run format:check"
+    ],
+    "checkpoint": "step-11-evaluaciones-dificultades",
+    "files": [
+      "src/components/FormularioEvaluacion.tsx",
+      "src/components/DiarioDificultades.tsx",
+      "src/components/GuiaDia.tsx",
+      "tests/componentes/evaluaciones.test.tsx"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E2-T5",
+    "title": "Página Progreso con dominio declarado",
+    "epic": "02-interfaz-y-despliegue",
+    "dependencies": [
+      "E2-T4"
+    ],
+    "priority": "p1",
+    "acceptance": [
+      "WHEN Progreso renders with day 1 completed THE SYSTEM SHALL show the separate headings «Avance de actividades» and «Dominio declarado», the text «7 de <total> bloques completados» and the level «sin-evaluar» for «Dominio y rango de funciones reales».",
+      "WHEN every study day of «Funciones» is completed THE SYSTEM SHALL list «Funciones» under «Temas estudiados» and show «No tienes repasos pendientes.».",
+      "WHEN today is day 3 and the day 2 review block is not marked THE SYSTEM SHALL list «Dominio y rango de funciones reales (programado el día 2)».",
+      "WHEN «Dominado» is saved without evidence THE SYSTEM SHALL show an alert mentioning «evidencia» and save nothing; with evidence it SHALL save `{ nivel: \"dominado\", evidencia, fecha }`.",
+      "WHEN an evaluation of day 10 on «Funciones» with 15/20 exists THE SYSTEM SHALL show «Día 10 · Funciones · 15/20»."
+    ],
+    "verify": [
+      "npm test -- tests/componentes/progreso.test.tsx",
+      "npm test",
+      "npm run check",
+      "npm run build",
+      "test -f dist/progreso/index.html",
+      "npm run format:check"
+    ],
+    "checkpoint": "step-12-progreso",
+    "files": [
+      "src/components/Progreso.tsx",
+      "src/pages/progreso/index.astro",
+      "tests/componentes/progreso.test.tsx"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E2-T6",
+    "title": "Página Ajustes, respaldo, importar y reiniciar",
+    "epic": "02-interfaz-y-despliegue",
+    "dependencies": [
+      "E2-T4"
+    ],
+    "priority": "p1",
+    "acceptance": [
+      "WHEN the duration is changed to 45 and «Guardar cambios» is pressed THE SYSTEM SHALL save `horizonteDias: 45` and keep the completed block `calculo-diferencial:estudio:dominio-y-rango#1:teoria`.",
+      "WHEN the minutes are 123 THE SYSTEM SHALL show an alert containing «múltiplo de 5» and keep 120.",
+      "WHEN «Días de refuerzo de Límites» is set to 2 and saved THE SYSTEM SHALL store `refuerzos: [{ temaSlug: \"limites\", dias: 2 }]`.",
+      "WHEN there is progress and no backup THE SYSTEM SHALL show the reminder in Hoy, and «Exportar ahora» SHALL download the file once, set `ultimoRespaldo` to today and hide the reminder.",
+      "WHEN a valid backup file is chosen THE SYSTEM SHALL show «Este respaldo contiene: …» and replace the progress only after «Reemplazar mi progreso»; an invalid file SHALL show «El archivo no es un respaldo válido: no es JSON.» and change nothing.",
+      "WHEN «Reiniciar todo» and then «Sí, borrar mi progreso» are pressed THE SYSTEM SHALL save the initial state, and not before the confirmation."
+    ],
+    "verify": [
+      "npm test -- tests/componentes/ajustes.test.tsx",
+      "npm test",
+      "npm run check",
+      "npm run build",
+      "test -f dist/ajustes/index.html",
+      "npm run format:check"
+    ],
+    "checkpoint": "step-13-ajustes-respaldo",
+    "files": [
+      "src/components/RecordatorioRespaldo.tsx",
+      "src/components/Ajustes.tsx",
+      "src/pages/ajustes/index.astro",
+      "src/components/GuiaDia.tsx",
+      "tests/componentes/ajustes.test.tsx"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E2-T7",
+    "title": "Workflow de GitHub Pages y README del docente",
+    "epic": "02-interfaz-y-despliegue",
+    "dependencies": [
+      "E2-T3",
+      "E2-T5",
+      "E2-T6"
+    ],
+    "priority": "p1",
+    "acceptance": [
+      "WHEN `node scripts/verificar-workflow.mjs` runs THE SYSTEM SHALL print `verificar-workflow: OK` because `.github/workflows/deploy.yml` uses space indentation and contains, in order, checkout@v7, setup-node@v7 with `.nvmrc`, `npm ci`, `npm run format:check`, `npm run check`, `npm test`, `npm run build`, configure-pages@v6, upload-pages-artifact@v5 with `path: dist` and deploy-pages@v5.",
+      "WHEN `npm run build` runs THE SYSTEM SHALL write the six pages `dist/index.html`, `dist/hoy/index.html`, `dist/dia/index.html`, `dist/calendario/index.html`, `dist/progreso/index.html` and `dist/ajustes/index.html`, and `verificar-dist.mjs` SHALL print `verificar-dist: OK`.",
+      "WHEN the README is read by `grep` THE SYSTEM SHALL contain `src/data/rutas/index.ts` and the rule «nunca renombres un `slug`».",
+      "WHEN `npm run format:check` runs THE SYSTEM SHALL exit 0 including `.github/workflows/deploy.yml`."
+    ],
+    "verify": [
+      "node scripts/verificar-workflow.mjs",
+      "npm test",
+      "npm run check",
+      "npm run build",
+      "test -f dist/index.html",
+      "test -f dist/hoy/index.html",
+      "test -f dist/dia/index.html",
+      "test -f dist/calendario/index.html",
+      "test -f dist/progreso/index.html",
+      "test -f dist/ajustes/index.html",
+      "grep -q 'src/data/rutas/index.ts' README.md",
+      "grep -qi 'nunca renombres un `slug`' README.md",
+      "npm run format:check"
+    ],
+    "checkpoint": "step-14-despliegue",
+    "files": [
+      ".github/workflows/deploy.yml",
+      "scripts/verificar-workflow.mjs",
+      "README.md"
+    ],
+    "status": "pending"
+  }
+]
