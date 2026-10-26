@@ -1,0 +1,131 @@
+---
+import "@fontsource-variable/fraunces";
+import "@fontsource-variable/inter";
+import "../styles/tokens.css";
+import "../styles/global.css";
+
+interface Props {
+  titulo: string;
+  seccion?: "hoy" | "calendario" | "progreso" | "ajustes";
+}
+
+const { titulo, seccion } = Astro.props;
+const base = import.meta.env.BASE_URL;
+const enlaces = [
+  {
+    id: "hoy",
+    texto: "Hoy",
+    href: `${base}hoy/`,
+    icono: "M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM12 2v3M12 19v3M2 12h3M19 12h3",
+  },
+  {
+    id: "calendario",
+    texto: "Calendario",
+    href: `${base}calendario/`,
+    icono: "M4 6h16v14H4zM4 10h16M9 3v4M15 3v4",
+  },
+  {
+    id: "progreso",
+    texto: "Progreso",
+    href: `${base}progreso/`,
+    icono: "M4 20V10M10 20V4M16 20v-8M2 20h20",
+  },
+  {
+    id: "ajustes",
+    texto: "Ajustes",
+    href: `${base}ajustes/`,
+    icono: "M4 7h10M18 7h2M4 17h4M12 17h8M14 4v6M8 14v6",
+  },
+];
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%278%27 fill=%27%230f766e%27/%3E%3Ctext x=%2716%27 y=%2722%27 font-size=%2716%27 text-anchor=%27middle%27 fill=%27white%27 font-family=%27Georgia%27%3EM%3C/text%3E%3C/svg%3E"
+    />
+    <title>{titulo} · Mentorix Calc — Reto de 30 Días</title>
+    <script is:inline>
+      (function () {
+        try {
+          var tema = localStorage.getItem("mentorix-tema");
+          if (tema === "light" || tema === "dark") {
+            document.documentElement.setAttribute("data-theme", tema);
+          }
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body>
+    <a class="saltar" href="#contenido">
+      Saltar al contenido
+    </a>
+    <button
+      class="conmutador-tema"
+      type="button"
+      data-conmutador-tema
+      aria-label="Cambiar entre modo claro y oscuro"
+    >
+      <span aria-hidden="true">◐</span>
+    </button>
+    <nav class="navegacion" aria-label="Navegación principal">
+      <a class="navegacion__marca" href={base}>
+        Mentorix Calc
+      </a>
+      <ul class="navegacion__lista">
+        {enlaces.map((enlace) => (
+          <li>
+            <a
+              class="navegacion__enlace"
+              href={enlace.href}
+              aria-current={seccion === enlace.id ? "page" : undefined}
+            >
+              <svg
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d={enlace.icono} />
+              </svg>
+              <span>{enlace.texto}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+    <main id="contenido" class="contenido">
+      <slot />
+    </main>
+    <script is:inline>
+      (function () {
+        var boton = document.querySelector("[data-conmutador-tema]");
+        if (!boton) return;
+        boton.addEventListener("click", function () {
+          var raiz = document.documentElement;
+          var actual = raiz.getAttribute("data-theme");
+          if (!actual) {
+            actual = window.matchMedia("(prefers-color-scheme: dark)").matches
+              ? "dark"
+              : "light";
+          }
+          var siguiente = actual === "dark" ? "light" : "dark";
+          raiz.setAttribute("data-theme", siguiente);
+          try {
+            localStorage.setItem("mentorix-tema", siguiente);
+          } catch (e) {}
+        });
+      })();
+    </script>
+  </body>
+</html>

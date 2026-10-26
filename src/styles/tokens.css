@@ -1,0 +1,75 @@
+/* Tokens de diseño: única fuente de colores, tipografía, radios y espaciado. */
+:root {
+  color-scheme: light;
+  --bg: #f6f8f7;
+  --surface: #ffffff;
+  --surface-2: #eef3f1;
+  --text: #0f1f1c;
+  --text-muted: #5b6b67;
+  --primary: #0f766e;
+  --primary-contrast: #ffffff;
+  --accent: #d97706;
+  --success: #15803d;
+  --warning: #b45309;
+  --danger: #b91c1c;
+  --border: #d6e0dd;
+
+  --font-titulos: "Fraunces Variable", Georgia, serif;
+  --font-texto:
+    "Inter Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --texto-base: 16px;
+  --escala-1: 1.25rem;
+  --escala-2: 1.5625rem;
+  --escala-3: 1.953rem;
+  --escala-4: 2.441rem;
+
+  --radio-tarjeta: 14px;
+  --radio-boton: 10px;
+  --sombra-1: 0 1px 2px rgb(15 31 28 / 0.06), 0 2px 8px rgb(15 31 28 / 0.06);
+  --sombra-2: 0 4px 16px rgb(15 31 28 / 0.1);
+
+  --e-1: 4px;
+  --e-2: 8px;
+  --e-3: 12px;
+  --e-4: 16px;
+  --e-5: 24px;
+  --e-6: 32px;
+  --e-7: 48px;
+
+  --transicion: 180ms ease-out;
+  --ancho-max: 960px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #0b1513;
+    --surface: #12201d;
+    --surface-2: #1a2c28;
+    --text: #e7f0ee;
+    --text-muted: #9db0ab;
+    --primary: #2dd4bf;
+    --primary-contrast: #04201c;
+    --accent: #fbbf24;
+    --success: #4ade80;
+    --warning: #fbbf24;
+    --danger: #f87171;
+    --border: #24413b;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0b1513;
+  --surface: #12201d;
+  --surface-2: #1a2c28;
+  --text: #e7f0ee;
+  --text-muted: #9db0ab;
+  --primary: #2dd4bf;
+  --primary-contrast: #04201c;
+  --accent: #fbbf24;
+  --success: #4ade80;
+  --warning: #fbbf24;
+  --danger: #f87171;
+  --border: #24413b;
+}

@@ -1,20 +1,11 @@
 ---
-const inicio = import.meta.env.BASE_URL;
+import Base from "../layouts/Base.astro";
 ---
 
-<!doctype html>
-<html lang="es">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Mentorix Calc — Reto de Estudio de 30 Días</title>
-  </head>
-  <body>
-    <main>
-      <h1>Mentorix Calc — Reto de Estudio de 30 Días</h1>
-      <p>
-        <a href={inicio}>Inicio</a>
-      </p>
-    </main>
-  </body>
-</html>
+<Base titulo="Inicio">
+  <h1>Mentorix Calc — Reto de Estudio de 30 Días</h1>
+  <p class="texto-tenue">
+    Tu guía diaria: qué estudiar hoy y cómo usar los recursos de tu
+    acompañamiento.
+  </p>
+</Base>
