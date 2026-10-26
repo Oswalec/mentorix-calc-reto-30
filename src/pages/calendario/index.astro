@@ -1,0 +1,11 @@
+---
+import Base from "../../layouts/Base.astro";
+import IslaCalendario from "../../components/Calendario";
+---
+
+<Base titulo="Calendario" seccion="calendario">
+  <h1>Calendario</h1>
+  <IslaCalendario client:only="preact">
+    <p slot="fallback">Cargando tu calendario…</p>
+  </IslaCalendario>
+</Base>
