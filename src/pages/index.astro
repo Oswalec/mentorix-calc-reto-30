@@ -1,5 +1,6 @@
 ---
 import Base from "../layouts/Base.astro";
+import IslaInicio from "../components/Inicio";
 ---
 
 <Base titulo="Inicio">
@@ -8,4 +9,10 @@ import Base from "../layouts/Base.astro";
     Tu guía diaria: qué estudiar hoy y cómo usar los recursos de tu
     acompañamiento.
   </p>
+  <IslaInicio client:only="preact">
+    <p slot="fallback">Cargando tu reto…</p>
+  </IslaInicio>
+  <noscript>
+    <p>Esta guía necesita JavaScript activado para guardar tu progreso.</p>
+  </noscript>
 </Base>
