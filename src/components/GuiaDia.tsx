@@ -18,6 +18,7 @@ import {
 import type { Dia, Ruta, TipoDia } from "../lib/tipos";
 import { FormularioEvaluacion } from "./FormularioEvaluacion";
 import { LimiteErrores } from "./LimiteErrores";
+import { RecordatorioRespaldo } from "./RecordatorioRespaldo";
 
 export const ETIQUETAS_TIPO: Record<TipoDia, string> = {
   estudio: "Estudio",
@@ -205,6 +206,7 @@ export function GuiaDia(props: Props) {
 
   return (
     <article class={`guia tipo-${dia.tipo}`}>
+      <RecordatorioRespaldo />
       {aviso && <p class="tarjeta">{aviso}</p>}
       <header class="tarjeta">
         <p class="texto-tenue">

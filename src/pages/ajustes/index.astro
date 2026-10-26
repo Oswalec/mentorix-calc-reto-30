@@ -1,0 +1,11 @@
+---
+import Base from "../../layouts/Base.astro";
+import IslaAjustes from "../../components/Ajustes";
+---
+
+<Base titulo="Ajustes" seccion="ajustes">
+  <h1>Ajustes</h1>
+  <IslaAjustes client:only="preact">
+    <p slot="fallback">Cargando tus ajustes…</p>
+  </IslaAjustes>
+</Base>
