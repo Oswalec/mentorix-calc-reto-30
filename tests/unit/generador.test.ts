@@ -8,14 +8,20 @@ import {
   numeroDelDia,
   sumarDias,
 } from "../../src/lib/fechas";
-import { erroresConfig, generarPlan } from "../../src/lib/plan/generador";
+import { configInicial } from "../../src/lib/plan/ajustes";
+import {
+  AUTOEVALUACION,
+  erroresConfig,
+  generarPlan,
+  repartirExtras,
+} from "../../src/lib/plan/generador";
 import {
   minutosDelDia,
   repartirMinutos,
   repartoDelDia,
 } from "../../src/lib/plan/minutos";
 import type { ConfigPlan, TipoDia } from "../../src/lib/tipos";
-import { rutaPrueba } from "../fixtures/ruta-prueba";
+import { rutaNivelacion, rutaPrueba } from "../fixtures/ruta-prueba";
 
 const base: ConfigPlan = {
   fechaInicio: "2026-03-01",
@@ -155,7 +161,7 @@ describe("generarPlan — ejemplo trabajado", () => {
     );
     expect(plan.dias[2]!.objetivo).toBe("Comprender y practicar «Subtema B».");
     expect(plan.dias[3]!.queHacer).toBe(
-      "Realiza un examen de años anteriores sobre Tema uno, con tiempo limitado y sin consultar tus apuntes. Registra tu nota y tus errores.",
+      "Practica con exámenes de años anteriores sobre Tema uno: con tiempo limitado y sin consultar tus apuntes. Luego registra tu nota, tus errores y los temas a reforzar.",
     );
     expect(plan.dias[11]!.queHacer).toBe(
       "Completa el simulacro que tienes disponible en tu acompañamiento, con el tiempo real del examen.",
@@ -241,16 +247,16 @@ describe("generarPlan — ejemplo trabajado", () => {
   });
 
   it("inserta los días de refuerzo de un prerrequisito antes del tema que lo pide", () => {
-    const config = { ...base, refuerzos: [{ temaSlug: "t1", dias: 2 }] };
+    const config = { ...base, refuerzos: [{ temaSlug: "base-t1", dias: 2 }] };
     expect(claves(config)).toEqual([
       "estudio:a#1",
       "estudio:a#2",
       "estudio:b#1",
       "evaluacion:t1",
       "correccion:t1",
-      "refuerzo:t1#1",
+      "refuerzo:base-t1#1",
       "repaso:rep-1",
-      "refuerzo:t1#2",
+      "refuerzo:base-t1#2",
       "estudio:c#1",
       "estudio:c#2",
       "estudio:c#3",
@@ -258,15 +264,34 @@ describe("generarPlan — ejemplo trabajado", () => {
       "correccion:t2",
       "repaso:rep-2",
     ]);
-    expect(generarPlan(rutaPrueba, config).dias[5]!.objetivo).toBe(
+    const refuerzo = generarPlan(rutaPrueba, config).dias[5]!;
+    expect(refuerzo.objetivo).toBe(
       "Reforzar «Tema uno» antes de empezar «Tema dos» (día 1 de 2).",
     );
+    expect(refuerzo.bloques.find((b) => b.tipo === "teoria")!.enlaces).toEqual(
+      rutaPrueba.temas[1]!.prerrequisitos[0]!.enlaces,
+    );
+  });
+
+  it("enlaza las lecciones del subtema en Teoría y Práctica, nunca en evaluaciones", () => {
+    const plan = generarPlan(rutaPrueba, base);
+    const bloques = Object.fromEntries(
+      plan.dias[0]!.bloques.map((b) => [b.tipo, b.enlaces]),
+    );
+    expect(bloques.teoria).toEqual(rutaPrueba.temas[0]!.subtemas[0]!.teoria);
+    expect(bloques.practica).toEqual(
+      rutaPrueba.temas[0]!.subtemas[0]!.practica,
+    );
+    expect(bloques.ejemplos).toBeUndefined();
+    for (const dia of plan.dias.filter((d) => d.tipo !== "estudio")) {
+      for (const bloque of dia.bloques) expect(bloque.enlaces).toBeUndefined();
+    }
   });
 
   it("rechaza configuraciones inválidas con RangeError", () => {
     expect(erroresConfig(base)).toEqual([]);
     expect(() =>
-      generarPlan(rutaPrueba, { ...base, horizonteDias: 6 }),
+      generarPlan(rutaPrueba, { ...base, horizonteDias: 2 }),
     ).toThrow(RangeError);
     expect(() =>
       generarPlan(rutaPrueba, { ...base, minutosPorDia: 123 }),
@@ -277,11 +302,104 @@ describe("generarPlan — ejemplo trabajado", () => {
   });
 });
 
+describe("generarPlan — duración estirable", () => {
+  it("con más días reserva simulacro y reparte el resto por dificultad (3, 2, 1)", () => {
+    expect(Object.fromEntries(repartirExtras(rutaPrueba, 6))).toEqual({
+      b: 2,
+      c: 2,
+      a: 2,
+    });
+    expect(claves({ ...base, horizonteDias: 21 })).toEqual([
+      "estudio:a#1",
+      "estudio:a#2",
+      "estudio:a#3",
+      "estudio:a#4",
+      "estudio:b#1",
+      "estudio:b#2",
+      "repaso:rep-1",
+      "estudio:b#3",
+      "evaluacion:t1",
+      "correccion:t1",
+      "estudio:c#1",
+      "estudio:c#2",
+      "estudio:c#3",
+      "repaso:rep-2",
+      "estudio:c#4",
+      "estudio:c#5",
+      "evaluacion:t2",
+      "correccion:t2",
+      "simulacro:final",
+      "correccion:final",
+      "repaso:rep-3",
+    ]);
+    const plan = generarPlan(rutaPrueba, { ...base, horizonteDias: 21 });
+    expect(plan.dias[0]!.objetivo).toBe(
+      "Comprender y practicar «Subtema A» (día 1 de 4).",
+    );
+    expect(plan.dias[8]!.repasoSlugs).toEqual(["b"]);
+  });
+
+  it("una ruta sin evaluaciones no programa examen ni simulacro y cierra con autoevaluación", () => {
+    const corta = { ...base, horizonteDias: 3, minutosPorDia: 180 };
+    expect(
+      generarPlan(rutaNivelacion, corta).dias.map((d) =>
+        d.bloques[0]!.id.split(":").slice(1, 3).join(":"),
+      ),
+    ).toEqual(["estudio:d1#1", "estudio:d2#1", "estudio:d3#1"]);
+    const plan = generarPlan(rutaNivelacion, corta);
+    const ultimo = plan.dias[2]!;
+    const opcional = ultimo.bloques.at(-1)!;
+    expect(opcional).toMatchObject({
+      id: "nivel:estudio:d3#1:opcional",
+      tipo: "opcional",
+      minutos: 0,
+      opcional: true,
+    });
+    expect(plan.dias[0]!.bloques.some((b) => b.opcional)).toBe(false);
+    expect(ultimo.cierre.at(-1)).toBe(AUTOEVALUACION);
+    expect(ultimo.siguientePaso).toBe("Sigue con la ruta principal.");
+    expect(
+      generarPlan(rutaNivelacion, { ...corta, horizonteDias: 5 }).dias.map(
+        (d) => d.bloques[0]!.id.split(":")[2],
+      ),
+    ).toEqual(["d1#1", "d2#1", "d2#2", "d3#1", "d3#2"]);
+  });
+});
+
 describe("generarPlan — rutas reales", () => {
-  it("genera 30 días válidos para cada ruta sin perder subtemas", () => {
+  it("Cálculo Diferencial e Integral caben completos en su base de 30 días", () => {
+    for (const slug of ["calculo-diferencial", "calculo-integral"]) {
+      const ruta = rutas.find((r) => r.slug === slug)!;
+      const plan = generarPlan(ruta, configInicial("2026-03-01", ruta));
+      expect(plan.dias, slug).toHaveLength(30);
+      expect(plan.fueraDelHorizonte, slug).toEqual([]);
+    }
+  });
+
+  it("Diferencial se estira a 40, 50 y 60 días con simulacro y más días de estudio", () => {
+    const ruta = rutas.find((r) => r.slug === "calculo-diferencial")!;
+    const conteo = (dias: number) => {
+      const plan = generarPlan(ruta, {
+        ...configInicial("2026-03-01", ruta),
+        horizonteDias: dias,
+      });
+      const tipos = plan.dias.map((d) => d.tipo);
+      return [
+        tipos.filter((t) => t === "estudio").length,
+        tipos.filter((t) => t === "simulacro").length,
+        tipos.filter((t) => t === "repaso").length,
+      ];
+    };
+    expect(conteo(30)).toEqual([20, 0, 4]);
+    expect(conteo(40)).toEqual([27, 1, 5]);
+    expect(conteo(50)).toEqual([35, 1, 7]);
+    expect(conteo(60)).toEqual([44, 1, 8]);
+  });
+
+  it("genera su duración base válida para cada ruta sin perder subtemas", () => {
     for (const ruta of rutas) {
-      const plan = generarPlan(ruta, { ...base, horizonteDias: 30 }, rutas);
-      expect(plan.dias).toHaveLength(30);
+      const plan = generarPlan(ruta, configInicial("2026-03-01", ruta));
+      expect(plan.dias).toHaveLength(ruta.horizonteBase);
       const programados = new Set(
         plan.dias.flatMap((d) => (d.subtemaSlug ? [d.subtemaSlug] : [])),
       );

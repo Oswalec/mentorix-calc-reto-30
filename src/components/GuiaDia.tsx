@@ -201,8 +201,9 @@ export function GuiaDia(props: Props) {
   }
 
   const completados = progreso.completados;
-  const hechos = dia.bloques.filter((b) => b.id in completados).length;
-  const totalMinutos = dia.bloques.reduce((t, b) => t + b.minutos, 0);
+  const obligatorios = dia.bloques.filter((b) => !b.opcional);
+  const hechos = obligatorios.filter((b) => b.id in completados).length;
+  const totalMinutos = obligatorios.reduce((t, b) => t + b.minutos, 0);
 
   return (
     <article class={`guia tipo-${dia.tipo}`}>
@@ -247,7 +248,10 @@ export function GuiaDia(props: Props) {
         <p class="texto-tenue">Total: {totalMinutos} min</p>
         <ul class="bloques">
           {dia.bloques.map((bloque) => (
-            <li key={bloque.id}>
+            <li
+              key={bloque.id}
+              class={bloque.opcional ? "bloque-opcional" : ""}
+            >
               <label>
                 <input
                   type="checkbox"
@@ -266,15 +270,31 @@ export function GuiaDia(props: Props) {
                   }}
                 />
                 <strong>
-                  {bloque.titulo} · {bloque.minutos} min
+                  {bloque.opcional
+                    ? `${bloque.titulo} · sin tiempo asignado`
+                    : `${bloque.titulo} · ${bloque.minutos} min`}
                 </strong>
               </label>
               <p class="texto-tenue">{bloque.instruccion}</p>
+              {bloque.enlaces && (
+                <ul
+                  class="enlaces-skool"
+                  aria-label={`Lecciones de ${bloque.titulo} en Skool`}
+                >
+                  {bloque.enlaces.map((e) => (
+                    <li key={e.url}>
+                      <a href={e.url} target="_blank" rel="noopener noreferrer">
+                        ▶ {e.titulo}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </li>
           ))}
         </ul>
         <p aria-live="polite">
-          {hechos} de {dia.bloques.length} bloques completados
+          {hechos} de {obligatorios.length} bloques completados
         </p>
       </section>
 

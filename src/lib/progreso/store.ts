@@ -1,6 +1,6 @@
 // Estado global de las islas (Preact Signals). Única puerta de escritura: actualizar().
 import { computed, signal } from "@preact/signals";
-import { buscarRuta, rutas } from "../../data/rutas";
+import { buscarRuta } from "../../data/rutas";
 import { hoyLocal, numeroDelDia } from "../fechas";
 import { generarPlan } from "../plan/generador";
 import { cargarEstado, guardarEstado } from "./almacen";
@@ -46,7 +46,7 @@ export const progresoActivo = computed(() => {
 export const planActivo = computed(() => {
   const ruta = rutaActiva.value;
   const progreso = progresoActivo.value;
-  return ruta && progreso ? generarPlan(ruta, progreso.config, rutas) : null;
+  return ruta && progreso ? generarPlan(ruta, progreso.config) : null;
 });
 
 /** Número de día de hoy dentro del plan activo (puede ser < 1 o > horizonte). */

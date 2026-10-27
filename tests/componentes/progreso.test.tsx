@@ -17,7 +17,7 @@ import {
 
 const RUTA = "calculo-diferencial";
 // Días de estudio de «Funciones» con 30 días y día ligero cada 7.
-const DIAS_FUNCIONES = [1, 2, 3, 4, 5, 6, 8, 9];
+const DIAS_FUNCIONES = [1, 2, 3, 4, 5, 6];
 
 function completarDias(...numeros: number[]) {
   for (const n of numeros) {
@@ -52,7 +52,7 @@ describe("Progreso", () => {
     expect(
       (
         screen.getByLabelText(
-          "Nivel de Dominio y rango de funciones reales",
+          "Nivel de M.I · Dominio, rango, gráfica y tipos de funciones",
         ) as HTMLSelectElement
       ).value,
     ).toBe("sin-evaluar");
@@ -72,14 +72,14 @@ describe("Progreso", () => {
     render(<Progreso />);
     expect(
       screen.getByText(
-        "Dominio y rango de funciones reales (programado el día 2)",
+        "M.I · Dominio, rango, gráfica y tipos de funciones (programado el día 3)",
       ),
     ).toBeTruthy();
   });
 
   it("exige evidencia para declarar «Dominado» y la guarda cuando existe", () => {
     render(<Progreso />);
-    const nombre = "Dominio y rango de funciones reales";
+    const nombre = "M.I · Dominio, rango, gráfica y tipos de funciones";
     fireEvent.change(screen.getByLabelText(`Nivel de ${nombre}`), {
       target: { value: "dominado" },
     });
@@ -94,11 +94,13 @@ describe("Progreso", () => {
     fireEvent.click(
       screen.getByRole("button", { name: `Guardar dominio de ${nombre}` }),
     );
-    expect(guardado().rutas[RUTA].dominio["dominio-y-rango"]).toEqual({
-      nivel: "dominado",
-      evidencia: "18/20 en el examen del día 10",
-      fecha: "2026-03-03",
-    });
+    expect(guardado().rutas[RUTA].dominio["fun-dominio-rango-grafica"]).toEqual(
+      {
+        nivel: "dominado",
+        evidencia: "18/20 en el examen del día 10",
+        fecha: "2026-03-03",
+      },
+    );
   });
 
   it("muestra los resultados de exámenes registrados", () => {

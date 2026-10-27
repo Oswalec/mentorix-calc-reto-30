@@ -12,7 +12,7 @@ import {
   temasEstudiados,
 } from "../../src/lib/progreso/derivados";
 import { estadoInicial } from "../../src/lib/progreso/estado";
-import { rutaPrueba } from "../fixtures/ruta-prueba";
+import { rutaNivelacion, rutaPrueba } from "../fixtures/ruta-prueba";
 
 const config = { ...configInicial("2026-03-01"), horizonteDias: 14 };
 const plan = generarPlan(rutaPrueba, config);
@@ -113,5 +113,25 @@ describe("derivados del progreso", () => {
       dominado: 0,
     });
     expect(dificultadesAbiertas(conDominio).map((d) => d.id)).toEqual(["d1"]);
+  });
+
+  it("el bloque opcional no cuenta para el estado del día ni para el avance", () => {
+    const nivel = generarPlan(rutaNivelacion, {
+      ...configInicial("2026-03-01"),
+      horizonteDias: 3,
+      minutosPorDia: 180,
+    });
+    const dia = nivel.dias[2]!;
+    const hechos = Object.fromEntries(
+      dia.bloques.filter((b) => !b.opcional).map((b) => [b.id, "x"]),
+    );
+    expect(estadoDelDia(dia, hechos)).toBe("completado");
+    const soloOpcional = { "nivel:estudio:d3#1:opcional": "x" };
+    expect(estadoDelDia(dia, soloOpcional)).toBe("pendiente");
+    expect(progresoGlobal(nivel, soloOpcional)).toEqual({
+      completados: 0,
+      total: 21,
+      porcentaje: 0,
+    });
   });
 });

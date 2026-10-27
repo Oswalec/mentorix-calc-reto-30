@@ -38,18 +38,50 @@ describe("catálogo de rutas", () => {
     expect(temas.map((t) => t.slug)).not.toContain("final");
   });
 
-  it("solo declara prerrequisitos que existen y que se estudian antes en su ruta", () => {
+  it("declara prerrequisitos con slug propio y enlaces, sin depender de otra ruta", () => {
+    const prerrequisitos = temas.flatMap((t) => t.prerrequisitos);
+    const slugsTemas = new Set([
+      ...temas.map((t) => t.slug),
+      ...subtemas.map((s) => s.slug),
+    ]);
+    for (const p of prerrequisitos) {
+      expect(p.slug).toMatch(SLUG);
+      expect(slugsTemas.has(p.slug), p.slug).toBe(false);
+      expect(p.nombre.trim(), p.slug).not.toBe("");
+      expect(p.enlaces.length, p.slug).toBeGreaterThan(0);
+    }
+    const unicos = new Map(prerrequisitos.map((p) => [p.slug, p.nombre]));
+    expect(unicos.size).toBe(
+      new Set(prerrequisitos.map((p) => `${p.slug}|${p.nombre}`)).size,
+    );
+  });
+
+  it("solo enlaza a lecciones de la comunidad en Skool", () => {
+    const enlaces = [
+      ...subtemas.flatMap((s) => [
+        ...(s.teoria ?? []),
+        ...(s.ejemplos ?? []),
+        ...(s.practica ?? []),
+        ...(s.opcionales ?? []),
+      ]),
+      ...temas.flatMap((t) => t.prerrequisitos.flatMap((p) => p.enlaces)),
+    ];
+    expect(enlaces.length).toBeGreaterThan(100);
+    for (const e of enlaces) {
+      expect(e.url).toMatch(
+        /^https:\/\/www\.skool\.com\/mentorix-8847\/classroom\/[0-9a-f]{8}(\?md=[0-9a-f]{32})?$/,
+      );
+      expect(e.titulo.trim()).not.toBe("");
+    }
+  });
+
+  it("define duración y minutos base válidos para cada ruta", () => {
     for (const ruta of rutas) {
-      ruta.temas.forEach((tema, indice) => {
-        for (const prerrequisito of tema.prerrequisitos) {
-          expect(buscarTema(prerrequisito), prerrequisito).toBeDefined();
-          expect(prerrequisito).not.toBe(tema.slug);
-          const posicion = ruta.temas.findIndex(
-            (t) => t.slug === prerrequisito,
-          );
-          if (posicion >= 0) expect(posicion).toBeLessThan(indice);
-        }
-      });
+      expect(Number.isInteger(ruta.horizonteBase), ruta.slug).toBe(true);
+      expect(ruta.horizonteBase).toBeGreaterThanOrEqual(3);
+      expect(ruta.minutosBase % 5, ruta.slug).toBe(0);
+      expect(ruta.minutosBase).toBeGreaterThanOrEqual(60);
+      expect(ruta.minutosBase).toBeLessThanOrEqual(360);
     }
   });
 

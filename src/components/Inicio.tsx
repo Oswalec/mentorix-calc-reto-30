@@ -16,6 +16,7 @@ import {
   rutaActiva,
 } from "../lib/progreso/store";
 import { LimiteErrores } from "./LimiteErrores";
+import { SelectorDuracion } from "./SelectorDuracion";
 
 function AvisoDatosDanados() {
   const crudo = datosDanados.value;
@@ -51,15 +52,22 @@ function AvisoDatosDanados() {
 
 function ElegirRuta() {
   const [rutaSlug, setRutaSlug] = useState(rutas[0]!.slug);
+  const ruta = rutas.find((r) => r.slug === rutaSlug)!;
   const [fechaInicio, setFechaInicio] = useState(fechaHoy.value);
-  const [horizonte, setHorizonte] = useState("30");
-  const [minutos, setMinutos] = useState("120");
+  const [horizonte, setHorizonte] = useState(String(ruta.horizonteBase));
+  const [minutos, setMinutos] = useState(String(ruta.minutosBase));
   const [errores, setErrores] = useState<string[]>([]);
+
+  function elegirRuta(elegida: (typeof rutas)[number]) {
+    setRutaSlug(elegida.slug);
+    setHorizonte(String(elegida.horizonteBase));
+    setMinutos(String(elegida.minutosBase));
+  }
 
   function empezar(evento: Event) {
     evento.preventDefault();
     const config = {
-      ...configInicial(fechaInicio),
+      ...configInicial(fechaInicio, ruta),
       horizonteDias: Number(horizonte),
       minutosPorDia: Number(minutos),
     };
@@ -75,19 +83,19 @@ function ElegirRuta() {
       <h2>Empieza tu reto de estudio</h2>
       <fieldset>
         <legend>Elige tu ruta</legend>
-        {rutas.map((ruta) => (
-          <label key={ruta.slug} class="opcion-ruta">
+        {rutas.map((opcion) => (
+          <label key={opcion.slug} class="opcion-ruta">
             <input
               type="radio"
               name="ruta"
-              value={ruta.slug}
-              checked={rutaSlug === ruta.slug}
-              onChange={() => setRutaSlug(ruta.slug)}
+              value={opcion.slug}
+              checked={rutaSlug === opcion.slug}
+              onChange={() => elegirRuta(opcion)}
             />
             <span>
-              <strong>{ruta.nombre}</strong>
+              <strong>{opcion.nombre}</strong>
               <br />
-              <span class="texto-tenue">{ruta.descripcion}</span>
+              <span class="texto-tenue">{opcion.descripcion}</span>
             </span>
           </label>
         ))}
@@ -101,29 +109,16 @@ function ElegirRuta() {
           onInput={(e) => setFechaInicio(e.currentTarget.value)}
         />
       </div>
-      <div class="campo">
-        <label for="horizonte">Duración del reto (días)</label>
-        <input
-          id="horizonte"
-          type="number"
-          min={7}
-          max={120}
-          value={horizonte}
-          onInput={(e) => setHorizonte(e.currentTarget.value)}
-        />
-      </div>
-      <div class="campo">
-        <label for="minutos">Minutos de estudio por día</label>
-        <input
-          id="minutos"
-          type="number"
-          min={60}
-          max={360}
-          step={5}
-          value={minutos}
-          onInput={(e) => setMinutos(e.currentTarget.value)}
-        />
-      </div>
+      <SelectorDuracion
+        ruta={ruta}
+        prefijo="inicio"
+        horizonte={horizonte}
+        minutos={minutos}
+        onCambio={(h, m) => {
+          setHorizonte(h);
+          setMinutos(m);
+        }}
+      />
       {errores.length > 0 && (
         <ul role="alert">
           {errores.map((error) => (

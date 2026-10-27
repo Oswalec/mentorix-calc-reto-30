@@ -5,11 +5,13 @@ export const ecuacionesDiferenciales: Ruta = {
   nombre: "Ecuaciones Diferenciales",
   descripcion:
     "EDO de primer orden y sus aplicaciones, EDO lineales de orden superior, transformada de Laplace y sistemas.",
+  horizonteBase: 30,
+  minutosBase: 120,
   temas: [
     {
       slug: "edo-primer-orden",
       nombre: "EDO de primer orden",
-      prerrequisitos: ["integral-indefinida"],
+      prerrequisitos: [],
       subtemas: [
         {
           slug: "conceptos-basicos-edo",
@@ -53,7 +55,7 @@ export const ecuacionesDiferenciales: Ruta = {
     {
       slug: "aplicaciones-primer-orden",
       nombre: "Aplicaciones de primer orden",
-      prerrequisitos: ["edo-primer-orden"],
+      prerrequisitos: [],
       subtemas: [
         {
           slug: "crecimiento-decaimiento",
@@ -84,7 +86,7 @@ export const ecuacionesDiferenciales: Ruta = {
     {
       slug: "edo-orden-superior",
       nombre: "EDO lineales de orden superior",
-      prerrequisitos: ["edo-primer-orden"],
+      prerrequisitos: [],
       subtemas: [
         {
           slug: "homogeneas-coeficientes-constantes",
@@ -121,7 +123,7 @@ export const ecuacionesDiferenciales: Ruta = {
     {
       slug: "transformada-laplace",
       nombre: "Transformada de Laplace",
-      prerrequisitos: ["integrales-impropias", "edo-orden-superior"],
+      prerrequisitos: [],
       subtemas: [
         {
           slug: "definicion-laplace",
@@ -152,7 +154,7 @@ export const ecuacionesDiferenciales: Ruta = {
     {
       slug: "sistemas-edo",
       nombre: "Sistemas de EDO",
-      prerrequisitos: ["edo-orden-superior"],
+      prerrequisitos: [],
       subtemas: [
         {
           slug: "sistemas-eliminacion",

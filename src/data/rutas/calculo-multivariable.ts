@@ -5,11 +5,13 @@ export const calculoMultivariable: Ruta = {
   nombre: "Cálculo Multivariable",
   descripcion:
     "Funciones de varias variables, derivadas parciales, extremos con Lagrange e integrales dobles y triples.",
+  horizonteBase: 30,
+  minutosBase: 120,
   temas: [
     {
       slug: "funciones-varias-variables",
       nombre: "Funciones de varias variables",
-      prerrequisitos: ["funciones"],
+      prerrequisitos: [],
       subtemas: [
         {
           slug: "dominio-varias-variables",
@@ -34,7 +36,7 @@ export const calculoMultivariable: Ruta = {
     {
       slug: "limites-continuidad-varias",
       nombre: "Límites y continuidad en varias variables",
-      prerrequisitos: ["funciones-varias-variables", "limites"],
+      prerrequisitos: [],
       subtemas: [
         {
           slug: "limites-varias-variables",
@@ -53,7 +55,7 @@ export const calculoMultivariable: Ruta = {
     {
       slug: "derivadas-parciales",
       nombre: "Derivadas parciales y diferenciabilidad",
-      prerrequisitos: ["limites-continuidad-varias", "derivadas"],
+      prerrequisitos: [],
       subtemas: [
         {
           slug: "calculo-derivadas-parciales",
@@ -84,7 +86,7 @@ export const calculoMultivariable: Ruta = {
     {
       slug: "extremos-lagrange",
       nombre: "Extremos y multiplicadores de Lagrange",
-      prerrequisitos: ["derivadas-parciales"],
+      prerrequisitos: [],
       subtemas: [
         {
           slug: "puntos-criticos-hessiana",
@@ -109,7 +111,7 @@ export const calculoMultivariable: Ruta = {
     {
       slug: "integrales-dobles",
       nombre: "Integrales dobles",
-      prerrequisitos: ["integral-definida"],
+      prerrequisitos: [],
       subtemas: [
         {
           slug: "dobles-rectangulos",
@@ -140,7 +142,7 @@ export const calculoMultivariable: Ruta = {
     {
       slug: "integrales-triples",
       nombre: "Integrales triples",
-      prerrequisitos: ["integrales-dobles"],
+      prerrequisitos: [],
       subtemas: [
         {
           slug: "triples-rectangulares",

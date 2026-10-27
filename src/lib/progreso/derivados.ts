@@ -15,9 +15,10 @@ export function estadoDelDia(
   dia: Dia,
   completados: Record<string, string>,
 ): EstadoDia {
-  const hechos = dia.bloques.filter((b) => b.id in completados).length;
+  const obligatorios = dia.bloques.filter((b) => !b.opcional);
+  const hechos = obligatorios.filter((b) => b.id in completados).length;
   if (hechos === 0) return "pendiente";
-  return hechos === dia.bloques.length ? "completado" : "parcial";
+  return hechos === obligatorios.length ? "completado" : "parcial";
 }
 
 export function posicionDelDia(numero: number, hoyNumero: number): PosicionDia {
@@ -36,7 +37,9 @@ export function progresoGlobal(
   plan: Plan,
   completados: Record<string, string>,
 ): Avance {
-  const ids = plan.dias.flatMap((d) => d.bloques.map((b) => b.id));
+  const ids = plan.dias.flatMap((d) =>
+    d.bloques.filter((b) => !b.opcional).map((b) => b.id),
+  );
   const hechos = ids.filter((id) => id in completados).length;
   return {
     completados: hechos,

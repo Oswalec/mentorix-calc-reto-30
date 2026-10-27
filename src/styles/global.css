@@ -398,3 +398,73 @@ progress {
     animation-duration: 0ms !important;
   }
 }
+
+/* Ritmo del reto: botones de duración sugerida */
+.ritmos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: var(--e-2);
+  margin-bottom: var(--e-2);
+}
+
+.ritmo {
+  display: grid;
+  gap: 2px;
+  min-height: 44px;
+  padding: var(--e-2) var(--e-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radio-boton);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ritmo[aria-pressed="true"] {
+  border-color: var(--primary);
+  box-shadow: inset 0 0 0 1px var(--primary);
+  background: var(--surface-2);
+}
+
+/* Enlaces a las lecciones de Skool dentro de cada bloque */
+.enlaces-skool {
+  list-style: none;
+  margin: var(--e-2) 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e-2);
+}
+
+.bloques .enlaces-skool li {
+  padding: 0;
+  border: 0;
+}
+
+.enlaces-skool a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: var(--e-1) var(--e-3);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--primary);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.enlaces-skool a:hover {
+  border-color: var(--primary);
+}
+
+/* Bloque opcional: visible pero aparte, no suma tiempo ni avance */
+.bloques li.bloque-opcional {
+  margin-top: var(--e-2);
+  padding: var(--e-3);
+  border: 1px dashed var(--border);
+  border-radius: var(--radio-boton);
+}

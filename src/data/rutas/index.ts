@@ -5,8 +5,10 @@ import { calculoDiferencial } from "./calculo-diferencial";
 import { calculoIntegral } from "./calculo-integral";
 import { calculoMultivariable } from "./calculo-multivariable";
 import { ecuacionesDiferenciales } from "./ecuaciones-diferenciales";
+import { precalculo } from "./precalculo";
 
 export const rutas: Ruta[] = [
+  precalculo,
   calculoDiferencial,
   calculoIntegral,
   calculoMultivariable,

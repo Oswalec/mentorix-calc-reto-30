@@ -6,7 +6,9 @@ import type {
   ConfigPlan,
   Dia,
   Dificultad,
+  Enlace,
   Plan,
+  Prerrequisito,
   Ruta,
   Subtema,
   SubtemaRef,
@@ -24,12 +26,14 @@ export const CIERRE_SESION = [
   "Escribe en una frase qué aprendiste hoy.",
 ];
 
+export const AUTOEVALUACION =
+  "Autoevalúate: ¿podrías resolver sin mirar un ejercicio de cada tema de hoy? Registra lo que te costó.";
+
 type Unidad =
-  | { tipo: "estudio"; tema: Tema; subtema: Subtema; k: number }
+  | { tipo: "estudio"; tema: Tema; subtema: Subtema; k: number; total: number }
   | {
       tipo: "refuerzo";
-      prerrequisito: string;
-      nombre: string;
+      prerrequisito: Prerrequisito;
       para: Tema;
       k: number;
       total: number;
@@ -56,10 +60,10 @@ export function erroresConfig(config: ConfigPlan): string[] {
   }
   if (
     !Number.isInteger(config.horizonteDias) ||
-    config.horizonteDias < 7 ||
+    config.horizonteDias < 3 ||
     config.horizonteDias > 120
   ) {
-    errores.push("La duración debe ser un número entero entre 7 y 120 días.");
+    errores.push("La duración debe ser un número entero entre 3 y 120 días.");
   }
   if (
     !Number.isInteger(config.minutosPorDia) ||
@@ -92,18 +96,14 @@ export function erroresConfig(config: ConfigPlan): string[] {
   return errores;
 }
 
-function nombreDeTema(slug: string, catalogo: Ruta[]): string {
-  for (const ruta of catalogo) {
-    const tema = ruta.temas.find((t) => t.slug === slug);
-    if (tema) return tema.nombre;
-  }
-  return slug;
-}
-
+/**
+ * `extras` = días de estudio añadidos a cada subtema cuando la duración
+ * elegida supera lo que el contenido necesita (ver repartirExtras).
+ */
 function construirGrupos(
   ruta: Ruta,
   config: ConfigPlan,
-  catalogo: Ruta[],
+  extras: ReadonlyMap<string, number>,
 ): Grupo[] {
   const grupos: Grupo[] = [];
   const usados = new Set<string>();
@@ -111,16 +111,16 @@ function construirGrupos(
     const refuerzos: Unidad[] = [];
     for (const prerrequisito of tema.prerrequisitos) {
       const refuerzo = config.refuerzos.find(
-        (r) => r.temaSlug === prerrequisito,
+        (r) => r.temaSlug === prerrequisito.slug,
       );
-      if (!refuerzo || refuerzo.dias < 1 || usados.has(prerrequisito)) continue;
-      usados.add(prerrequisito);
-      const nombre = nombreDeTema(prerrequisito, catalogo);
+      if (!refuerzo || refuerzo.dias < 1 || usados.has(prerrequisito.slug)) {
+        continue;
+      }
+      usados.add(prerrequisito.slug);
       for (let k = 1; k <= refuerzo.dias; k++) {
         refuerzos.push({
           tipo: "refuerzo",
           prerrequisito,
-          nombre,
           para: tema,
           k,
           total: refuerzo.dias,
@@ -129,10 +129,11 @@ function construirGrupos(
     }
     tema.subtemas.forEach((subtema, indice) => {
       const unidades: Unidad[] = indice === 0 ? [...refuerzos] : [];
-      for (let k = 1; k <= subtema.diasEstimados; k++) {
-        unidades.push({ tipo: "estudio", tema, subtema, k });
+      const total = subtema.diasEstimados + (extras.get(subtema.slug) ?? 0);
+      for (let k = 1; k <= total; k++) {
+        unidades.push({ tipo: "estudio", tema, subtema, k, total });
       }
-      if (indice === tema.subtemas.length - 1) {
+      if (indice === tema.subtemas.length - 1 && !tema.sinEvaluacion) {
         unidades.push({ tipo: "evaluacion", tema });
         unidades.push({ tipo: "correccion", tema });
       }
@@ -140,6 +141,30 @@ function construirGrupos(
     });
   }
   return grupos;
+}
+
+/**
+ * Reparte `sobrantes` días de estudio extra, una vuelta tras otra, sobre los
+ * subtemas ordenados por dificultad (3, luego 2, luego 1; en orden de ruta).
+ */
+export function repartirExtras(
+  ruta: Ruta,
+  sobrantes: number,
+): Map<string, number> {
+  const extras = new Map<string, number>();
+  const orden = ruta.temas
+    .flatMap((t) => t.subtemas)
+    .map((subtema, indice) => ({ subtema, indice }))
+    .sort(
+      (a, b) =>
+        b.subtema.dificultad - a.subtema.dificultad || a.indice - b.indice,
+    )
+    .map(({ subtema }) => subtema.slug);
+  for (let i = 0; i < sobrantes && orden.length > 0; i++) {
+    const slug = orden[i % orden.length]!;
+    extras.set(slug, (extras.get(slug) ?? 0) + 1);
+  }
+  return extras;
 }
 
 function referencia(grupo: Grupo): SubtemaRef {
@@ -153,6 +178,9 @@ function referencia(grupo: Grupo): SubtemaRef {
 
 interface Textos {
   tipo: TipoDia;
+  enlaces: Partial<Record<TipoBloque, Enlace[] | undefined>>;
+  opcionales: Enlace[];
+  autoevaluacion: boolean;
   temaSlug: string | null;
   subtemaSlug: string | null;
   clave: string;
@@ -167,11 +195,17 @@ interface Textos {
 
 function textosDeUnidad(unidad: Unidad): Textos {
   if (unidad.tipo === "estudio") {
-    const { tema, subtema, k } = unidad;
-    const dias = subtema.diasEstimados;
-    const tramo = dias > 1 ? ` (día ${k} de ${dias})` : "";
+    const { tema, subtema, k, total } = unidad;
+    const tramo = total > 1 ? ` (día ${k} de ${total})` : "";
     return {
       tipo: "estudio",
+      enlaces: {
+        teoria: subtema.teoria,
+        ejemplos: subtema.ejemplos,
+        practica: subtema.practica,
+      },
+      opcionales: k === total ? (subtema.opcionales ?? []) : [],
+      autoevaluacion: Boolean(tema.sinEvaluacion),
       temaSlug: tema.slug,
       subtemaSlug: subtema.slug,
       clave: `${subtema.slug}#${k}`,
@@ -190,13 +224,17 @@ function textosDeUnidad(unidad: Unidad): Textos {
     };
   }
   if (unidad.tipo === "refuerzo") {
-    const { prerrequisito, nombre, para, k, total } = unidad;
+    const { prerrequisito, para, k, total } = unidad;
+    const nombre = prerrequisito.nombre;
     const tramo = total > 1 ? ` (día ${k} de ${total})` : "";
     return {
       tipo: "refuerzo",
-      temaSlug: prerrequisito,
+      enlaces: { teoria: prerrequisito.enlaces },
+      opcionales: [],
+      autoevaluacion: false,
+      temaSlug: prerrequisito.slug,
       subtemaSlug: null,
-      clave: `${prerrequisito}#${k}`,
+      clave: `${prerrequisito.slug}#${k}`,
       titulo: `Refuerzo: ${nombre}`,
       objetivo: `Reforzar «${nombre}» antes de empezar «${para.nombre}»${tramo}.`,
       queEstudiar: `Refuerzo de prerrequisito: ${nombre}`,
@@ -214,22 +252,28 @@ function textosDeUnidad(unidad: Unidad): Textos {
   if (unidad.tipo === "evaluacion") {
     return {
       tipo: "evaluacion",
+      enlaces: {},
+      opcionales: [],
+      autoevaluacion: false,
       temaSlug: tema.slug,
       subtemaSlug: null,
       clave: tema.slug,
       titulo: `Evaluación: ${tema.nombre}`,
       objetivo: `Medir tu dominio de «${tema.nombre}» en condiciones de examen.`,
       queEstudiar: `${tema.nombre} (todos sus subtemas)`,
-      queHacer: `Realiza un examen de años anteriores sobre ${tema.nombre}, con tiempo limitado y sin consultar tus apuntes. Registra tu nota y tus errores.`,
+      queHacer: `Practica con exámenes de años anteriores sobre ${tema.nombre}: con tiempo limitado y sin consultar tus apuntes. Luego registra tu nota, tus errores y los temas a reforzar.`,
       dificultad: 2,
       instrucciones: {
-        evaluacion: `Realiza un examen de años anteriores sobre ${tema.nombre}, con tiempo limitado y sin consultar tus apuntes.`,
+        evaluacion: `Practica con exámenes de años anteriores sobre ${tema.nombre}, con tiempo limitado y sin consultar tus apuntes.`,
       },
       titulos: { evaluacion: "Examen" },
     };
   }
   return {
     tipo: "correccion",
+    enlaces: {},
+    opcionales: [],
+    autoevaluacion: false,
     temaSlug: tema.slug,
     subtemaSlug: null,
     clave: tema.slug,
@@ -257,6 +301,9 @@ function textosSinUnidad(
       "Completa el simulacro que tienes disponible en tu acompañamiento, con el tiempo real del examen.";
     return {
       tipo: "simulacro",
+      enlaces: {},
+      opcionales: [],
+      autoevaluacion: false,
       temaSlug: null,
       subtemaSlug: null,
       clave: "final",
@@ -272,6 +319,9 @@ function textosSinUnidad(
   if (asignacion.tipo === "correccion-final") {
     return {
       tipo: "correccion",
+      enlaces: {},
+      opcionales: [],
+      autoevaluacion: false,
       temaSlug: null,
       subtemaSlug: null,
       clave: "final",
@@ -290,6 +340,9 @@ function textosSinUnidad(
   }
   return {
     tipo: "repaso",
+    enlaces: {},
+    opcionales: [],
+    autoevaluacion: false,
     temaSlug: null,
     subtemaSlug: null,
     clave: `rep-${ordinalRepaso}`,
@@ -314,6 +367,7 @@ const TITULOS_BLOQUE: Record<TipoBloque, string> = {
   descanso: "Descanso",
   repaso: "Repaso",
   cierre: "Cierre",
+  opcional: "Opcional",
 };
 
 function construirBloques(
@@ -324,55 +378,81 @@ function construirBloques(
 ): Bloque[] {
   const { pesos, residuo } = repartoDelDia(textos.tipo, textos.dificultad);
   const total = minutosDelDia(textos.tipo, minutosPorDia);
-  return repartirMinutos(total, pesos, residuo).map(([tipo, minutos]) => {
-    let instruccion = textos.instrucciones[tipo];
-    if (tipo === "recuperar") {
-      instruccion =
-        "Sin mirar tus apuntes, escribe lo que recuerdas de lo que estudiaste antes; luego compáralo con tus notas.";
-    } else if (tipo === "descanso") {
-      instruccion = `Pausa de ${minutos} minutos sin pantallas: camina, estira el cuerpo, toma agua.`;
-    } else if (tipo === "repaso") {
-      instruccion =
-        nombresRepaso.length > 0
-          ? `Repaso espaciado: ${nombresRepaso.map((n) => `«${n}»`).join(", ")}. Resuelve de memoria un ejercicio básico de cada uno.`
-          : "Repasa tus apuntes y los errores que registraste en días anteriores.";
-    } else if (tipo === "cierre") {
-      instruccion =
-        "Revisa la lista de cierre de sesión y registra tus errores o dificultades.";
-    }
-    const bloque: Bloque = {
-      id: `${rutaSlug}:${textos.tipo}:${textos.clave}:${tipo}`,
-      tipo,
-      titulo: textos.titulos[tipo] ?? TITULOS_BLOQUE[tipo],
-      instruccion: instruccion ?? "",
-      minutos,
-    };
-    if (
-      textos.subtemaSlug &&
-      (tipo === "teoria" || tipo === "ejemplos" || tipo === "practica")
-    ) {
-      bloque.subtemaSlug = textos.subtemaSlug;
-    }
-    return bloque;
-  });
+  const bloques = repartirMinutos(total, pesos, residuo).map(
+    ([tipo, minutos]) => {
+      let instruccion = textos.instrucciones[tipo];
+      if (tipo === "recuperar") {
+        instruccion =
+          "Sin mirar tus apuntes, escribe lo que recuerdas de lo que estudiaste antes; luego compáralo con tus notas.";
+      } else if (tipo === "descanso") {
+        instruccion = `Pausa de ${minutos} minutos sin pantallas: camina, estira el cuerpo, toma agua.`;
+      } else if (tipo === "repaso") {
+        instruccion =
+          nombresRepaso.length > 0
+            ? `Repaso espaciado: ${nombresRepaso.map((n) => `«${n}»`).join(", ")}. Resuelve de memoria un ejercicio básico de cada uno.`
+            : "Repasa tus apuntes y los errores que registraste en días anteriores.";
+      } else if (tipo === "cierre") {
+        instruccion =
+          "Revisa la lista de cierre de sesión y registra tus errores o dificultades.";
+      }
+      const bloque: Bloque = {
+        id: `${rutaSlug}:${textos.tipo}:${textos.clave}:${tipo}`,
+        tipo,
+        titulo: textos.titulos[tipo] ?? TITULOS_BLOQUE[tipo],
+        instruccion: instruccion ?? "",
+        minutos,
+      };
+      if (
+        textos.subtemaSlug &&
+        (tipo === "teoria" || tipo === "ejemplos" || tipo === "practica")
+      ) {
+        bloque.subtemaSlug = textos.subtemaSlug;
+      }
+      const enlaces = textos.enlaces[tipo];
+      if (enlaces && enlaces.length > 0) bloque.enlaces = enlaces;
+      return bloque;
+    },
+  );
+  if (textos.opcionales.length > 0) {
+    bloques.push({
+      id: `${rutaSlug}:${textos.tipo}:${textos.clave}:opcional`,
+      tipo: "opcional",
+      titulo: TITULOS_BLOQUE.opcional,
+      instruccion:
+        "Si tu curso lo pide: elige solo los módulos que tu universidad incluye en el sílabo. No suma tiempo ni cuenta para tu avance.",
+      minutos: 0,
+      enlaces: textos.opcionales,
+      opcional: true,
+    });
+  }
+  return bloques;
 }
 
 /**
  * Genera el plan de una ruta. Pura: misma entrada, misma salida.
- * `catalogo` sirve para nombrar temas prerrequisito de otras rutas.
  * Lanza RangeError si la configuración es inválida (ver erroresConfig).
  */
-export function generarPlan(
-  ruta: Ruta,
-  config: ConfigPlan,
-  catalogo: Ruta[] = [ruta],
-): Plan {
+export function generarPlan(ruta: Ruta, config: ConfigPlan): Plan {
   const errores = erroresConfig(config);
   if (errores.length > 0) throw new RangeError(errores.join(" "));
 
   const horizonte = config.horizonteDias;
   const esLigero = (n: number) =>
     config.diaLigeroCada > 0 && n % config.diaLigeroCada === 0;
+
+  // 0. Si la duración supera lo que el contenido necesita, el plan se estira:
+  //    primero se reservan simulacro + corrección (si la ruta tiene
+  //    evaluaciones) y el resto son días de estudio extra (repartirExtras).
+  let libresTotales = 0;
+  for (let n = 1; n <= horizonte; n++) if (!esLigero(n)) libresTotales++;
+  const necesarios = construirGrupos(ruta, config, new Map()).reduce(
+    (t, g) => t + g.unidades.length,
+    0,
+  );
+  const tieneEvaluaciones = ruta.temas.some((t) => !t.sinEvaluacion);
+  let sobrantes = Math.max(libresTotales - necesarios, 0);
+  if (tieneEvaluaciones) sobrantes = Math.max(sobrantes - 2, 0);
+  const extras = repartirExtras(ruta, sobrantes);
 
   // 1. Colocar los grupos de contenido sin comprimir nada.
   const asignaciones: Asignacion[] = [];
@@ -382,7 +462,7 @@ export function generarPlan(
   const fueraDelHorizonte: SubtemaRef[] = [];
   let cursor = 1;
   let desbordado = false;
-  for (const grupo of construirGrupos(ruta, config, [ruta, ...catalogo])) {
+  for (const grupo of construirGrupos(ruta, config, extras)) {
     if (desbordado) {
       fueraDelHorizonte.push(referencia(grupo));
       continue;
@@ -408,7 +488,7 @@ export function generarPlan(
   for (let n = cursor; n <= horizonte; n++) {
     if (!esLigero(n)) libres.push(n);
   }
-  if (!desbordado && libres.length >= 2) {
+  if (!desbordado && tieneEvaluaciones && libres.length >= 2) {
     asignaciones[libres[libres.length - 2]!] = { tipo: "simulacro" };
     asignaciones[libres[libres.length - 1]!] = { tipo: "correccion-final" };
   }
@@ -422,8 +502,8 @@ export function generarPlan(
     if (asignacion.tipo !== "unidad" || asignacion.unidad.tipo !== "estudio") {
       continue;
     }
-    const { subtema, k } = asignacion.unidad;
-    if (k !== subtema.diasEstimados) continue;
+    const { subtema, k, total } = asignacion.unidad;
+    if (k !== total) continue;
     for (const desplazamiento of DESPLAZAMIENTOS_REPASO) {
       const destino = n + desplazamiento;
       if (destino <= horizonte) {
@@ -473,10 +553,13 @@ export function generarPlan(
         config.minutosPorDia,
         programados.map((r) => r.nombre),
       ),
-      cierre: [...CIERRE_SESION],
+      cierre: textos.autoevaluacion
+        ? [...CIERRE_SESION, AUTOEVALUACION]
+        : [...CIERRE_SESION],
       siguientePaso: siguiente
         ? `Día ${n + 1}: ${siguiente.titulo}.`
-        : "Fin del horizonte: revisa tu progreso y, si aún tienes temas pendientes, extiende la ruta.",
+        : (ruta.mensajeFinal ??
+          "Fin del horizonte: revisa tu progreso y, si aún tienes temas pendientes, extiende la ruta."),
     });
   }
 

@@ -2,18 +2,39 @@
 // como los IDs de bloque no dependen de fechas, los completados se conservan.
 import type { ConfigPlan, Ruta } from "../tipos";
 
-export const HORIZONTE_MIN = 7;
+export const HORIZONTE_MIN = 3;
 export const HORIZONTE_MAX = 120;
 export const REFUERZO_MAX = 7;
 
-export function configInicial(fechaInicio: string): ConfigPlan {
+/** Configuración con la que arranca una ruta: su duración y minutos base. */
+export function configInicial(fechaInicio: string, ruta?: Ruta): ConfigPlan {
   return {
     fechaInicio,
-    horizonteDias: 30,
-    minutosPorDia: 120,
+    horizonteDias: ruta?.horizonteBase ?? 30,
+    minutosPorDia: ruta?.minutosBase ?? 120,
     diaLigeroCada: 7,
     refuerzos: [],
   };
+}
+
+export interface OpcionDuracion {
+  dias: number;
+  ritmo: string;
+  minutos: number;
+}
+
+/**
+ * Duraciones sugeridas: la base (intensivo) y 4/3, 5/3 y 2 veces la base.
+ * Con más días el plan se estira y bastan menos minutos por día.
+ */
+export function opcionesDuracion(ruta: Ruta): OpcionDuracion[] {
+  const base = ruta.horizonteBase;
+  return [
+    { dias: base, ritmo: "Intensivo", minutos: ruta.minutosBase },
+    { dias: Math.round((base * 4) / 3), ritmo: "Normal", minutos: 120 },
+    { dias: Math.round((base * 5) / 3), ritmo: "Tranquilo", minutos: 100 },
+    { dias: base * 2, ritmo: "Muy tranquilo", minutos: 90 },
+  ];
 }
 
 export function cambiarDuracion(
@@ -68,19 +89,17 @@ export interface PrerrequisitoDisponible {
 }
 
 /** Prerrequisitos que la ruta declara, en orden de primera aparición. */
-export function prerrequisitosDeRuta(
-  ruta: Ruta,
-  catalogo: Ruta[],
-): PrerrequisitoDisponible[] {
+export function prerrequisitosDeRuta(ruta: Ruta): PrerrequisitoDisponible[] {
   const resultado: PrerrequisitoDisponible[] = [];
   for (const tema of ruta.temas) {
-    for (const slug of tema.prerrequisitos) {
-      let entrada = resultado.find((p) => p.temaSlug === slug);
+    for (const prerrequisito of tema.prerrequisitos) {
+      let entrada = resultado.find((p) => p.temaSlug === prerrequisito.slug);
       if (!entrada) {
-        const nombre =
-          catalogo.flatMap((r) => r.temas).find((t) => t.slug === slug)
-            ?.nombre ?? slug;
-        entrada = { temaSlug: slug, nombre, requeridoPor: [] };
+        entrada = {
+          temaSlug: prerrequisito.slug,
+          nombre: prerrequisito.nombre,
+          requeridoPor: [],
+        };
         resultado.push(entrada);
       }
       entrada.requeridoPor.push(tema.nombre);

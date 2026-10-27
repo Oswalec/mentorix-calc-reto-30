@@ -16,13 +16,13 @@ import {
 } from "../../src/lib/progreso/store";
 
 const RUTA = "calculo-diferencial";
-// Con 30 días y día ligero cada 7, el examen de «Funciones» cae el día 10.
-const DIA_EVALUACION = 10;
+// Con 30 días y día ligero cada 7, el examen de «Funciones» cae el día 8.
+const DIA_EVALUACION = 8;
 
 beforeEach(() => {
   window.localStorage.clear();
   recargarEstado();
-  fechaHoy.value = "2026-03-10";
+  fechaHoy.value = "2026-03-08";
   actualizar((e) => activarRuta(e, RUTA, configInicial("2026-03-01")));
 });
 
@@ -41,7 +41,7 @@ describe("Evaluaciones externas", () => {
     ).toBeTruthy();
     expect(
       screen.getByText(
-        "Realiza un examen de años anteriores sobre Funciones, con tiempo limitado y sin consultar tus apuntes. Registra tu nota y tus errores.",
+        "Practica con exámenes de años anteriores sobre Funciones: con tiempo limitado y sin consultar tus apuntes. Luego registra tu nota, tus errores y los temas a reforzar.",
       ),
     ).toBeTruthy();
   });
@@ -61,9 +61,9 @@ describe("Evaluaciones externas", () => {
     fireEvent.click(screen.getByRole("button", { name: "Guardar resultado" }));
     const [evaluacion] = guardado().rutas[RUTA].evaluaciones;
     expect(evaluacion).toMatchObject({
-      diaNumero: 10,
+      diaNumero: 8,
       temaSlug: "funciones",
-      fecha: "2026-03-10",
+      fecha: "2026-03-08",
       nota: 15,
       notaMaxima: 20,
       errores: "Olvidé restringir el dominio",
@@ -110,7 +110,7 @@ describe("Diario de dificultades", () => {
           registrarDificultad(e, RUTA, {
             id,
             fecha: "2026-03-02",
-            subtemaSlug: "operaciones-y-composicion",
+            subtemaSlug: "fun-algebra-composicion",
             texto,
             resuelta,
           }) as Estado,

@@ -45,12 +45,26 @@ describe("Calendario", () => {
   });
 
   it("lista lo que no cabe en «Para después del horizonte»", () => {
+    actualizar((e) =>
+      activarRuta({ ...e, rutas: {} }, RUTA, {
+        ...configInicial("2026-03-01"),
+        horizonteDias: 21,
+      }),
+    );
     render(<Calendario />);
     expect(
       screen.getByRole("heading", { name: "Para después del horizonte" }),
     ).toBeTruthy();
-    expect(screen.getByText("Reglas de derivación (2 días)")).toBeTruthy();
-    expect(screen.getByText("Problemas de optimización (2 días)")).toBeTruthy();
+    expect(
+      screen.getByText(
+        "M.II · Regla de la cadena, implícita y orden superior (1 día)",
+      ),
+    ).toBeTruthy();
+    expect(
+      screen.getByText(
+        "M.VI · Extremos, criterios, concavidad y gráficas (2 días)",
+      ),
+    ).toBeTruthy();
   });
 
   it("extiende 14 días y guarda el nuevo horizonte", () => {
@@ -71,7 +85,7 @@ describe("Calendario", () => {
     render(<Calendario />);
     fireEvent.click(screen.getByRole("button", { name: "Extender 7 días" }));
     expect(screen.getByRole("alert").textContent).toBe(
-      "La duración debe estar entre 7 y 120 días.",
+      "La duración debe estar entre 3 y 120 días.",
     );
     expect(dias()).toHaveLength(115);
   });

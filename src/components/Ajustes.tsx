@@ -23,6 +23,7 @@ import {
 } from "../lib/progreso/store";
 import type { ConfigPlan, Ruta } from "../lib/tipos";
 import { LimiteErrores } from "./LimiteErrores";
+import { SelectorDuracion } from "./SelectorDuracion";
 import { exportarProgreso, RecordatorioRespaldo } from "./RecordatorioRespaldo";
 
 function CambiarRuta() {
@@ -51,7 +52,16 @@ function CambiarRuta() {
         class="boton"
         type="button"
         onClick={() =>
-          actualizar((e) => activarRuta(e, slug, configInicial(fechaHoy.value)))
+          actualizar((e) =>
+            activarRuta(
+              e,
+              slug,
+              configInicial(
+                fechaHoy.value,
+                rutas.find((r) => r.slug === slug),
+              ),
+            ),
+          )
         }
       >
         Cambiar de ruta
@@ -121,29 +131,16 @@ function Plan({ ruta, config }: { ruta: Ruta; config: ConfigPlan }) {
             onInput={(e) => setFecha(e.currentTarget.value)}
           />
         </div>
-        <div class="campo">
-          <label for="ajustes-horizonte">Duración del reto (días)</label>
-          <input
-            id="ajustes-horizonte"
-            type="number"
-            min={7}
-            max={120}
-            value={horizonte}
-            onInput={(e) => setHorizonte(e.currentTarget.value)}
-          />
-        </div>
-        <div class="campo">
-          <label for="ajustes-minutos">Minutos de estudio por día</label>
-          <input
-            id="ajustes-minutos"
-            type="number"
-            min={60}
-            max={360}
-            step={5}
-            value={minutos}
-            onInput={(e) => setMinutos(e.currentTarget.value)}
-          />
-        </div>
+        <SelectorDuracion
+          ruta={ruta}
+          prefijo="ajustes"
+          horizonte={horizonte}
+          minutos={minutos}
+          onCambio={(h, m) => {
+            setHorizonte(h);
+            setMinutos(m);
+          }}
+        />
         <div class="campo">
           <label for="ajustes-ligero">Día ligero cada (días, 0 = nunca)</label>
           <input
@@ -207,7 +204,7 @@ function Plan({ ruta, config }: { ruta: Ruta; config: ConfigPlan }) {
 }
 
 function Refuerzos({ ruta, config }: { ruta: Ruta; config: ConfigPlan }) {
-  const disponibles = prerrequisitosDeRuta(ruta, rutas);
+  const disponibles = prerrequisitosDeRuta(ruta);
   const [dias, setDias] = useState<Record<string, string>>(
     Object.fromEntries(
       disponibles.map((p) => [

@@ -17,9 +17,10 @@ beforeEach(() => {
 });
 
 describe("Inicio", () => {
-  it("sin ruta activa muestra las cuatro rutas y la configuración inicial", () => {
+  it("sin ruta activa muestra las cinco rutas y la configuración de la primera", () => {
     render(<Inicio />);
     for (const nombre of [
+      "Precálculo",
       "Cálculo Diferencial",
       "Cálculo Integral",
       "Cálculo Multivariable",
@@ -35,11 +36,32 @@ describe("Inicio", () => {
     expect(
       (screen.getByLabelText("Duración del reto (días)") as HTMLInputElement)
         .value,
-    ).toBe("30");
+    ).toBe("3");
     expect(
       (screen.getByLabelText("Minutos de estudio por día") as HTMLInputElement)
         .value,
-    ).toBe("120");
+    ).toBe("180");
+  });
+
+  it("propone ritmos de 30, 40, 50 y 60 días y aplica sus minutos", () => {
+    render(<Inicio />);
+    fireEvent.click(screen.getByRole("radio", { name: /Cálculo Diferencial/ }));
+    const ritmo = (nombre: RegExp) =>
+      screen.getByRole("button", { name: nombre });
+    expect(
+      ritmo(/^30 días Intensivo 150 min/).getAttribute("aria-pressed"),
+    ).toBe("true");
+    fireEvent.click(ritmo(/^50 días Tranquilo 100 min/));
+    expect(
+      (screen.getByLabelText("Duración del reto (días)") as HTMLInputElement)
+        .value,
+    ).toBe("50");
+    expect(
+      (screen.getByLabelText("Minutos de estudio por día") as HTMLInputElement)
+        .value,
+    ).toBe("100");
+    expect(ritmo(/^40 días Normal 120 min/)).toBeTruthy();
+    expect(ritmo(/^60 días Muy tranquilo 90 min/)).toBeTruthy();
   });
 
   it("al empezar guarda la ruta en localStorage y muestra el resumen", () => {
@@ -51,7 +73,7 @@ describe("Inicio", () => {
     expect(guardado.rutas["calculo-integral"].config).toEqual({
       fechaInicio: "2026-03-01",
       horizonteDias: 30,
-      minutosPorDia: 120,
+      minutosPorDia: 150,
       diaLigeroCada: 7,
       refuerzos: [],
     });
@@ -59,14 +81,14 @@ describe("Inicio", () => {
     expect(screen.getByRole("link", { name: "Ir a Hoy" })).toBeTruthy();
   });
 
-  it("no empieza con una duración fuera de 7..120 y explica por qué", () => {
+  it("no empieza con una duración fuera de 3..120 y explica por qué", () => {
     render(<Inicio />);
     fireEvent.input(screen.getByLabelText("Duración del reto (días)"), {
       target: { value: "200" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Empezar mi reto" }));
     expect(estado.value.rutaActiva).toBeNull();
-    expect(screen.getByRole("alert").textContent).toContain("entre 7 y 120");
+    expect(screen.getByRole("alert").textContent).toContain("entre 3 y 120");
   });
 
   it("con datos dañados ofrece descargarlos y empezar de nuevo sin borrarlos", () => {

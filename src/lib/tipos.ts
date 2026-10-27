@@ -3,32 +3,59 @@
 /** 1 = baja, 2 = media, 3 = alta. */
 export type Dificultad = 1 | 2 | 3;
 
+/** Enlace a una lección externa (Skool). Solo se enlaza, nunca se copia contenido. */
+export interface Enlace {
+  titulo: string;
+  url: string;
+}
+
 export interface Subtema {
   /** Identificador estable. Nunca se renombra una vez publicado. */
   slug: string;
   nombre: string;
-  /** Días de estudio que consume. Entero >= 1. El plan nunca lo reduce. */
+  /** Días de estudio en la duración base. Entero >= 1. El plan nunca lo reduce. */
   diasEstimados: number;
   dificultad: Dificultad;
+  /** Lecciones de teoría, ejemplos y ejercicios que se enlazan en cada bloque. */
+  teoria?: Enlace[];
+  ejemplos?: Enlace[];
+  practica?: Enlace[];
+  /** Módulos opcionales: bloque aparte que no suma minutos ni avance. */
+  opcionales?: Enlace[];
+}
+
+/** Base que conviene reforzar antes de un tema (fuera de la ruta). */
+export interface Prerrequisito {
+  /** Identificador estable, único en el catálogo. */
+  slug: string;
+  nombre: string;
+  enlaces: Enlace[];
 }
 
 export interface Tema {
   slug: string;
   nombre: string;
-  /** Slugs de temas (de esta u otra ruta) que conviene dominar antes. */
-  prerrequisitos: string[];
+  prerrequisitos: Prerrequisito[];
   subtemas: Subtema[];
+  /** Tema de nivelación: sin examen ni corrección al final. */
+  sinEvaluacion?: boolean;
 }
 
 export interface Ruta {
   slug: string;
   nombre: string;
   descripcion: string;
+  /** Duración para la que está pensado el contenido (ritmo intensivo). */
+  horizonteBase: number;
+  /** Minutos por día sugeridos con la duración base. */
+  minutosBase: number;
+  /** Texto del «Siguiente paso» del último día; si falta, se usa el genérico. */
+  mensajeFinal?: string;
   temas: Tema[];
 }
 
 export interface Refuerzo {
-  /** Slug de un tema que algún tema de la ruta declara como prerrequisito. */
+  /** Slug de un prerrequisito declarado por algún tema de la ruta. */
   temaSlug: string;
   /** Días de refuerzo, entero 1..7. */
   dias: number;
@@ -37,7 +64,7 @@ export interface Refuerzo {
 export interface ConfigPlan {
   /** Fecha local YYYY-MM-DD del día 1. */
   fechaInicio: string;
-  /** Entero 7..120. */
+  /** Entero 3..120. */
   horizonteDias: number;
   /** Múltiplo de 5 entre 60 y 360. */
   minutosPorDia: number;
@@ -57,7 +84,8 @@ export type TipoBloque =
   | "evaluacion"
   | "descanso"
   | "repaso"
-  | "cierre";
+  | "cierre"
+  | "opcional";
 
 export interface Bloque {
   /** `${rutaSlug}:${tipoDia}:${clave}:${tipoBloque}` — ver generador.ts. */
@@ -67,6 +95,9 @@ export interface Bloque {
   instruccion: string;
   minutos: number;
   subtemaSlug?: string;
+  enlaces?: Enlace[];
+  /** No suma minutos ni cuenta para el avance del día. */
+  opcional?: boolean;
 }
 
 export interface Dia {

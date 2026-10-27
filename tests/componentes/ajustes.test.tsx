@@ -14,7 +14,7 @@ import {
 } from "../../src/lib/progreso/store";
 
 const RUTA = "calculo-diferencial";
-const BLOQUE = "calculo-diferencial:estudio:dominio-y-rango#1:teoria";
+const BLOQUE = "calculo-diferencial:estudio:fun-dominio-rango-grafica#1:teoria";
 
 const guardado = () => JSON.parse(window.localStorage.getItem(CLAVE_ALMACEN)!);
 
@@ -53,12 +53,17 @@ describe("Ajustes", () => {
 
   it("guarda días de refuerzo de un prerrequisito", () => {
     render(<Ajustes />);
-    fireEvent.input(screen.getByLabelText("Días de refuerzo de Límites"), {
-      target: { value: "2" },
-    });
+    fireEvent.input(
+      screen.getByLabelText(
+        "Días de refuerzo de Productos notables, factorización y racionalización (Introducción M1–M3)",
+      ),
+      {
+        target: { value: "2" },
+      },
+    );
     fireEvent.click(screen.getByRole("button", { name: "Guardar refuerzos" }));
     expect(guardado().rutas[RUTA].config.refuerzos).toEqual([
-      { temaSlug: "limites", dias: 2 },
+      { temaSlug: "base-algebra", dias: 2 },
     ]);
   });
 

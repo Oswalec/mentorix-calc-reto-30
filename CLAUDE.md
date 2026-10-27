@@ -28,13 +28,13 @@ Astro (salida estática, `base: /mentorix-calc-reto-30`) · islas Preact `client
 
 ## Arquitectura
 
-**Camino de un dato.** `src/data/rutas/*.ts` (contenido) → `src/lib/plan/generador.ts` (`generarPlan`, función pura) → `src/lib/progreso/store.ts` (signals: `estado`, `planActivo`, `hoyNumero`) → islas en `src/components/*.tsx` → páginas `src/pages/**/index.astro`. Toda escritura pasa por `actualizar(cambio)` del store, que llama a una acción pura de `src/lib/progreso/acciones.ts` y guarda con `src/lib/progreso/almacen.ts` bajo la clave `mentorix-reto:v1`.
+**Camino de un dato.** `src/data/rutas/*.ts` (contenido, con enlaces de `src/data/skool.ts`) → `src/lib/plan/generador.ts` (`generarPlan`, función pura) → `src/lib/progreso/store.ts` (signals: `estado`, `planActivo`, `hoyNumero`) → islas en `src/components/*.tsx` → páginas `src/pages/**/index.astro`. Toda escritura pasa por `actualizar(cambio)` del store, que llama a una acción pura de `src/lib/progreso/acciones.ts` y guarda con `src/lib/progreso/almacen.ts` bajo la clave `mentorix-reto:v1`.
 
 **Fronteras.**
 
 | Capa | Puede importar de | Nunca |
 |---|---|---|
-| `src/data/rutas/**` | solo tipos de `src/lib/tipos.ts` | lógica, componentes, `window` |
+| `src/data/rutas/**` | tipos de `src/lib/tipos.ts` y `src/data/skool.ts` | lógica, componentes, `window` |
 | `src/lib/plan/**`, `src/lib/fechas.ts` | `src/lib/tipos.ts` | `window`, `localStorage`, `Date.now()` dentro de `generarPlan` |
 | `src/lib/progreso/**` (salvo `store.ts`) | `src/lib/plan`, `src/lib/fechas.ts` | Preact, signals |
 | `src/lib/progreso/store.ts` | todo `src/lib`, `src/data` | componentes |
@@ -112,9 +112,10 @@ Skill del proyecto: `agregar-o-editar-ruta` (`.claude/skills/agregar-o-editar-ru
 ## No negociable
 
 1. Nunca renombres un `slug` publicado (ruta, tema o subtema): rompe los completados guardados.
-2. Nunca agregues contenido matemático, ejercicios, solucionarios, videos ni simulacros a la app: solo se programan como actividades externas.
+2. Nunca agregues contenido matemático, ejercicios, solucionarios, videos ni simulacros a la app: solo se programan como actividades externas y se **enlazan** las lecciones de Skool (nunca en días de evaluación).
 3. Completar bloques nunca cambia el dominio; solo `declararDominio`, y «dominado» exige evidencia.
-4. `generarPlan` nunca reduce `diasEstimados`: lo que no cabe va a `fueraDelHorizonte`.
+4. `generarPlan` nunca reduce `diasEstimados`: lo que no cabe va a `fueraDelHorizonte`; con más días que la base, el plan se estira (simulacro + `repartirExtras`).
 5. Nunca borres datos guardados que no validan: se copian a `mentorix-reto:v1:danado` y se ofrecen para descargar.
 6. Nunca agregues servicios con cuenta, servidor, analítica ni dependencias sin justificarlo en el commit.
 7. Nunca marques una tarea hecha con un gate en rojo, ni edites un comando Verify para que pase.
+8. Cada asignatura es una ruta independiente: ningún prerrequisito apunta a otra ruta.

@@ -6,8 +6,9 @@ paths:
 
 # Lógica del plan y del progreso
 
-- `generarPlan(ruta, config, catalogo)` es pura. El algoritmo está fijado por `tests/unit/generador.test.ts`: si cambias el orden de días, los minutos o un texto, esa prueba debe cambiar en el mismo commit y con una razón.
-- ID de bloque: `${rutaSlug}:${tipoDia}:${clave}:${tipoBloque}`; `clave` = `subtema#k`, `prerrequisito#k`, `temaSlug`, `rep-n` o `final`. Nunca incluyas la fecha en un ID.
+- `generarPlan(ruta, config)` es pura. El algoritmo está fijado por `tests/unit/generador.test.ts`: si cambias el orden de días, los minutos o un texto, esa prueba debe cambiar en el mismo commit y con una razón.
+- ID de bloque: `${rutaSlug}:${tipoDia}:${clave}:${tipoBloque}`; `clave` = `subtema#k`, `prerrequisito#k`, `temaSlug`, `rep-n` o `final`. Nunca incluyas la fecha en un ID. El bloque `opcional` (minutos 0, `opcional: true`) nunca cuenta en `estadoDelDia` ni en `progresoGlobal`.
+- Duración estirable: si el horizonte supera lo que el contenido necesita, se reservan simulacro + corrección (si la ruta tiene evaluaciones) y el resto se reparte con `repartirExtras` (vueltas sobre los subtemas por dificultad 3 → 2 → 1). Con menos días nunca se comprime: lo que no cabe va a `fueraDelHorizonte`.
 - Minutos: `max(floor(total*peso/500)*5, 5)` y el residuo al bloque designado; la suma es exactamente el total.
 - Repaso espaciado: d+1, d+3, d+7, d+14 desde el último día de estudio del subtema, solo dentro del horizonte.
 - Fechas: solo `src/lib/fechas.ts` (`sumarDias`, `diferenciaDias`, `hoyLocal`, `numeroDelDia`). Nunca `new Date("AAAA-MM-DD")`.

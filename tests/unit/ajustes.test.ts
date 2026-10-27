@@ -5,6 +5,7 @@ import {
   configInicial,
   extenderHorizonte,
   fijarRefuerzo,
+  opcionesDuracion,
   prerrequisitosDeRuta,
 } from "../../src/lib/plan/ajustes";
 import { generarPlan } from "../../src/lib/plan/generador";
@@ -37,10 +38,33 @@ describe("ajustes del plan", () => {
     }
   });
 
-  it("acepta duraciones de 7 a 120 días y rechaza el resto", () => {
-    expect(cambiarDuracion(corta, 45).horizonteDias).toBe(45);
+  it("parte de la duración y los minutos base de cada ruta", () => {
+    const precalculo = buscarRuta("precalculo")!;
+    expect(configInicial("2026-03-01", precalculo)).toMatchObject({
+      horizonteDias: 3,
+      minutosPorDia: 180,
+    });
+    expect(
+      opcionesDuracion(buscarRuta("calculo-diferencial")!).map((o) => [
+        o.dias,
+        o.ritmo,
+        o.minutos,
+      ]),
+    ).toEqual([
+      [30, "Intensivo", 150],
+      [40, "Normal", 120],
+      [50, "Tranquilo", 100],
+      [60, "Muy tranquilo", 90],
+    ]);
+    expect(opcionesDuracion(precalculo).map((o) => o.dias)).toEqual([
+      3, 4, 5, 6,
+    ]);
+  });
+
+  it("acepta duraciones de 3 a 120 días y rechaza el resto", () => {
+    expect(cambiarDuracion(corta, 3).horizonteDias).toBe(3);
     expect(cambiarDuracion(corta, 120).horizonteDias).toBe(120);
-    expect(() => cambiarDuracion(corta, 6)).toThrow(RangeError);
+    expect(() => cambiarDuracion(corta, 2)).toThrow(RangeError);
     expect(() => cambiarDuracion(corta, 121)).toThrow(RangeError);
     expect(() => cambiarDuracion(corta, 30.5)).toThrow(RangeError);
     expect(() =>
@@ -50,49 +74,34 @@ describe("ajustes del plan", () => {
   });
 
   it("crea, reemplaza y quita refuerzos de prerrequisitos", () => {
-    const con = fijarRefuerzo(corta, "t1", 2);
-    expect(con.refuerzos).toEqual([{ temaSlug: "t1", dias: 2 }]);
-    expect(fijarRefuerzo(con, "t1", 3).refuerzos).toEqual([
-      { temaSlug: "t1", dias: 3 },
+    const con = fijarRefuerzo(corta, "base-t1", 2);
+    expect(con.refuerzos).toEqual([{ temaSlug: "base-t1", dias: 2 }]);
+    expect(fijarRefuerzo(con, "base-t1", 3).refuerzos).toEqual([
+      { temaSlug: "base-t1", dias: 3 },
     ]);
-    expect(fijarRefuerzo(con, "t1", 0).refuerzos).toEqual([]);
-    expect(() => fijarRefuerzo(corta, "t1", 8)).toThrow(RangeError);
+    expect(fijarRefuerzo(con, "base-t1", 0).refuerzos).toEqual([]);
+    expect(() => fijarRefuerzo(corta, "base-t1", 8)).toThrow(RangeError);
   });
 
-  it("lista los prerrequisitos de una ruta, incluso de otras rutas", () => {
-    const edo = buscarRuta("ecuaciones-diferenciales")!;
+  it("lista los prerrequisitos de una ruta: su base en Introducción, nunca otra ruta", () => {
+    const diferencial = buscarRuta("calculo-diferencial")!;
     expect(
-      prerrequisitosDeRuta(edo, rutas).map((p) => [
+      prerrequisitosDeRuta(diferencial).map((p) => [
         p.temaSlug,
-        p.nombre,
         p.requeridoPor,
       ]),
     ).toEqual([
-      [
-        "integral-indefinida",
-        "Integral indefinida y técnicas de integración",
-        ["EDO de primer orden"],
-      ],
-      [
-        "edo-primer-orden",
-        "EDO de primer orden",
-        ["Aplicaciones de primer orden", "EDO lineales de orden superior"],
-      ],
-      [
-        "integrales-impropias",
-        "Integrales impropias",
-        ["Transformada de Laplace"],
-      ],
-      [
-        "edo-orden-superior",
-        "EDO lineales de orden superior",
-        ["Transformada de Laplace", "Sistemas de EDO"],
-      ],
+      ["base-intervalos-inecuaciones", ["Funciones"]],
+      ["base-exponenciales-logaritmos", ["Funciones"]],
+      ["base-trigonometria", ["Funciones"]],
+      ["base-algebra", ["Límites y continuidad"]],
     ]);
+    expect(prerrequisitosDeRuta(buscarRuta("precalculo")!)).toEqual([]);
   });
 
-  it("registra las cuatro rutas del acompañamiento en este orden", () => {
+  it("registra las cinco rutas, Precálculo primero y cada asignatura por separado", () => {
     expect(rutas.map((r) => r.slug)).toEqual([
+      "precalculo",
       "calculo-diferencial",
       "calculo-integral",
       "calculo-multivariable",
